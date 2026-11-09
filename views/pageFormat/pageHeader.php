@@ -18,7 +18,6 @@ $page_title = MetaTagManager::getWindowTitle() ?: 'Kalkaska County Library Newsp
 	<a class="kcl-skip-link" href="#main">Skip to main content</a>
 	<div class="kcl-utility">
 		<div class="container kcl-shell">
-			<span>Kalkaska County Library</span>
 			<a href="https://www.kalkaskalibrary.org/">Visit the library website <span aria-hidden="true">↗</span></a>
 		</div>
 	</div>
@@ -32,7 +31,6 @@ $page_title = MetaTagManager::getWindowTitle() ?: 'Kalkaska County Library Newsp
 	</header>
 	<nav class="kcl-nav" aria-label="Primary navigation">
 		<div class="container kcl-shell">
-			<a href="<?= htmlspecialchars($home_url, ENT_QUOTES, 'UTF-8'); ?>"<?= $is_home ? ' aria-current="page"' : ''; ?>>Archive home</a>
 			<a href="<?= htmlspecialchars($home_url.'#decades', ENT_QUOTES, 'UTF-8'); ?>">Browse by decade</a>
 			<a href="<?= htmlspecialchars($home_url.'#about-archive', ENT_QUOTES, 'UTF-8'); ?>">About the archive</a>
 		</div>

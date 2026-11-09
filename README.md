@@ -7,14 +7,17 @@ sibling TADL theme as described in [DEPENDENCIES.md](DEPENDENCIES.md).
 
 The landing page includes a prominent newspaper search, a browse-all link,
 15 decade links, and the supplied welcome, OCR and use text. Issue details use
-TADL's page preview with click-to-open document viewer, downloads and result navigation. The public
-navigation has no multi-collection directory, gallery or account menu.
+TADL's page preview with click-to-open document viewer, downloads and result
+navigation. The modal reuses TADL's background scroll lock and focus handling;
+closing it restores the issue page. The public navigation has no multi-collection
+directory, gallery or account menu.
 
 ## Design and content
 
 Branding follows [KCL's website](https://www.kalkaskalibrary.org/): white space,
-navy `#243f5d`, green `#267a38`, Lato, and orange-accented search. The default
+navy `#243f5d`, green `#267a38`, Lato, and a muted gray search border. The default
 theme already supplies the Lato fonts; no external font service is requested.
+Search focus darkens the existing border without adding an overlapping ring.
 The supplied archive wording is preserved, including its fair-use link.
 
 - Page chrome: `views/pageFormat/`.
@@ -78,8 +81,8 @@ perform OCR or change catalogue records itself.
 
 ## Local checks and layout preview
 
-Use PHP 8+ and a local Pawtucket 2.0.10 source tree. The default source path is
-the workspace's sibling `pawtucket2/`; pass another path when working elsewhere.
+Use PHP 8+, Node.js and a local Pawtucket 2.0.10 source tree. The default source
+path is the workspace's sibling `pawtucket2/`; pass another path when working elsewhere.
 The checks below never load application `setup.php` or a database. The separate
 production media-map generator deliberately loads the configured application.
 
@@ -88,6 +91,7 @@ php support/check_config.php /path/to/pawtucket2
 php tests/decade_links_test.php
 php tests/assets_test.php
 php tests/media_display_test.php
+php tests/media_panel_test.php
 php tests/error_view_test.php
 php tests/media_allowlist_test.php
 find views support -name '*.php' -exec php -l {} \;

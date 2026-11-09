@@ -56,7 +56,7 @@
 }
 .kcl-theme .kcl-skip-link:focus { top: 12px; }
 .kcl-utility { background: var(--kcl-navy); color: #fff; font-size: 13px; }
-.kcl-utility .kcl-shell { display: flex; justify-content: space-between; gap: 18px; padding-top: 9px; padding-bottom: 9px; }
+.kcl-utility .kcl-shell { display: flex; justify-content: flex-end; gap: 18px; padding-top: 9px; padding-bottom: 9px; }
 .kcl-theme .kcl-utility a { color: #fff; }
 .kcl-masthead { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-top: 28px; padding-bottom: 28px; }
 .kcl-brand { flex-shrink: 0; max-width: 100%; }
@@ -86,7 +86,7 @@
 	min-width: 0;
 	min-height: 60px;
 	padding: 14px 18px;
-	border: 2px solid #ff7900;
+	border: 2px solid #808a84;
 	border-radius: 0;
 	background: #fff;
 	color: #293943;
@@ -94,6 +94,11 @@
 	appearance: none;
 }
 .kcl-search-form input::placeholder { color: #58666d; opacity: 1; }
+.kcl-theme .kcl-search-form input:focus {
+	border-color: #59645d;
+	outline: none;
+	box-shadow: none;
+}
 .kcl-search-form button {
 	flex-shrink: 0;
 	min-height: 60px;
@@ -155,7 +160,73 @@
 .kcl-issue-thumbnails ul { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 32px; padding: 0; list-style: none; }
 .kcl-issue-thumbnails img { max-width: 120px; height: auto; }
 .kcl-issue-description { max-width: 850px; overflow-wrap: anywhere; }
+/* Match the shared dialog lifecycle; the PDF reader owns scrolling while open. */
+.kcl-theme #caMediaPanel { font: 14px/1.4 Lato, Arial, sans-serif; }
+.kcl-theme #caMediaPanel .tadl-document-controls {
+	min-height: 52px;
+	padding: 4px 12px;
+	font: 14px/20px Lato, Arial, sans-serif;
+}
+.kcl-theme #caMediaPanel .tadl-document-controls .objectInfo {
+	height: auto;
+	font: inherit;
+	align-self: center;
+}
+.kcl-theme #caMediaPanel .tadl-document-controls .nextPreviousLinks {
+	flex: 0 1 35%;
+	order: 0;
+	align-items: center;
+	max-width: 40%;
+	width: auto;
+	padding: 0;
+	font: inherit;
+}
+.kcl-theme #caMediaPanel .tadl-document-controls .nextPreviousLinks a {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.kcl-theme #caMediaPanel .tadl-document-controls .close {
+	position: static;
+	display: flex;
+	align-items: center;
+	align-self: center;
+	height: auto;
+	opacity: 1;
+}
+.kcl-theme #caMediaPanel .tadl-document-controls .tadl-dialog-close {
+	width: 44px;
+	height: 44px;
+	min-width: 44px;
+	min-height: 44px;
+	margin: 0;
+	padding: 0;
+	border-color: #bccbd8;
+	background: var(--kcl-navy);
+	color: #fff;
+	font: 20px/1 Lato, Arial, sans-serif;
+}
+.kcl-theme #caMediaPanel .tadl-dialog-close:hover { background: #165c7d; }
+.kcl-theme #caMediaOverlayContent .toolbarLabel,
+.kcl-theme #caMediaOverlayContent .toolbarField,
+.kcl-theme #caMediaOverlayContent #scaleSelect { font: 14px/18px Lato, Arial, sans-serif; }
+.kcl-theme #caMediaOverlayContent .toolbarLabel { padding-top: 2px; padding-bottom: 2px; }
+.kcl-theme #caMediaOverlayContent .toolbarField:not([type="checkbox"]) {
+	height: 24px;
+	margin-top: 4px;
+	margin-bottom: 4px;
+	padding: 2px 4px;
+}
 @media (max-width: 767px) {
+	.kcl-theme #caMediaPanel .tadl-document-controls { padding-right: 8px; padding-left: 8px; }
+	.kcl-theme #caMediaPanel .tadl-document-controls .nextPreviousLinks {
+		flex: 1 1 100%;
+		order: 2;
+		justify-content: space-between;
+		max-width: 100%;
+		padding-bottom: 4px;
+	}
 	.kcl-theme .container.kcl-shell { padding-right: 20px; padding-left: 20px; }
 	.kcl-utility { font-size: 12px; }
 	.kcl-masthead { align-items: flex-start; flex-direction: column; gap: 16px; padding-top: 24px; padding-bottom: 24px; }
@@ -179,7 +250,6 @@
 	.kcl-footer-links { margin-bottom: 24px; text-align: left; }
 }
 @media (max-width: 359px) {
-	.kcl-utility .kcl-shell { flex-direction: column; gap: 2px; }
 	.kcl-decade-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media print {

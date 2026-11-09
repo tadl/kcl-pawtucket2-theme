@@ -21,7 +21,7 @@
 		</div>
 	</footer>
 	<?= TooltipManager::getLoadHTML(); ?>
-	<div id="caMediaPanel" role="complementary" aria-label="Document and image viewer">
+	<div id="caMediaPanel" role="dialog" aria-modal="true" aria-label="Document and image viewer" aria-hidden="true" tabindex="-1">
 		<div id="caMediaPanelContentArea"></div>
 	</div>
 	<script>
@@ -41,6 +41,9 @@
 					mobileSafariViewportTagID: '_msafari_viewport',
 					closeButtonSelector: '.close'
 				});
+				if (window.tadlAccessiblePanel) {
+					window.tadlAccessiblePanel(caMediaPanel, document.getElementById('caMediaPanel'));
+				}
 			}
 		});
 	</script>
