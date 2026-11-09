@@ -16,8 +16,8 @@ Create the output directory outside the web root, writable by that user and
 traversable by Apache. The generator publishes mode0640 files owned by its
 runner and current group, so use Apache's readable group. A nonblocking lock
 prevents overlapping cron runs. Use `--quiet` for the once-per-minute scheduled
-refresh during import; successful quiet runs print nothing. Preserve the
-`helpers -> ../tadl/helpers` dependency.
+refresh during import; successful quiet runs print nothing. The generator uses
+the helpers owned by this KCL checkout; no sibling theme is needed.
 
 The root idno must be `kcl` and must resolve unambiguously. Public means access1
 on both the nondeleted object and representation, within that institution's

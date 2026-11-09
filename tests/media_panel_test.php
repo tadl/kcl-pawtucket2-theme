@@ -1,5 +1,10 @@
 <?php
-/** Execute the rendered KCL footer against the actual shared panel adapter. */
+/** Execute the rendered KCL footer against its local panel adapter and PDF view. */
+$arguments = array_values(array_filter(array_slice($argv, 1), static fn($argument) => $argument !== '--fixtures'));
+$core = realpath($arguments[0] ?? __DIR__.'/../../../pawtucket2');
+if (!$core || !is_file($core.'/assets/pdfjs/viewer/viewer.js')) {
+	throw new RuntimeException('Pass a local Pawtucket source path.');
+}
 function _t($text, ...$arguments) { return $arguments ? vsprintf($text, $arguments) : $text; }
 class CookieOptionsManager { public static function cookieManagerEnabled() { return false; } }
 class TooltipManager { public static function getLoadHTML() { return ''; } }
@@ -13,7 +18,7 @@ $pdfView = new class {
 	public $request;
 	public function __construct() { $this->request = new class { public function getBaseUrlPath() { return ''; } }; }
 	public function getVar($key) { return ['width'=>'100%', 'height'=>'100%', 'search'=>'', 'scroll_mode'=>0, 'original_media_url'=>'/synthetic.pdf'][$key] ?? null; }
-	public function renderPdf() { ob_start(); include dirname(__DIR__).'/../tadl/views/mediaViewers/pdfjs.php'; return ob_get_clean(); }
+	public function renderPdf() { ob_start(); include dirname(__DIR__).'/views/mediaViewers/pdfjs.php'; return ob_get_clean(); }
 };
 $pdf = $pdfView->renderPdf();
 if (in_array('--fixtures', $argv, true)) {
@@ -40,7 +45,7 @@ function mediaPanelTree(DOMElement $element): array {
 $pdfDocument = new DOMDocument();
 $pdfDocument->loadHTML($pdf, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
 $pdfTree = mediaPanelTree((new DOMXPath($pdfDocument))->query('//*[@id="outerContainer"]')->item(0));
-$pdfRuntime = file_get_contents(dirname(__DIR__).'/../../pawtucket2/assets/pdfjs/viewer/viewer.js');
+$pdfRuntime = file_get_contents($core.'/assets/pdfjs/viewer/viewer.js');
 if (!preg_match('/function webViewerKeyDown\(evt\) \{.*?(?=\nfunction apiPageLayoutToSpreadMode\()/s', $pdfRuntime, $nativeKeydown)) {
 	throw new RuntimeException('The native PDF keyboard handler could not be found.');
 }
@@ -262,7 +267,7 @@ key('keydown', 'Escape', () => { nativeKeys++; }); key('keyup', 'Escape', native
 assert.equal(panel.getAttribute('aria-hidden'), 'true'); assert.equal(document.activeElement, opener);
 assert.equal(nativeKeys, 4);
 content.replace(); assert.equal(activeObservers(), 2, 'Removing an AJAX viewer must disconnect its scoped observers.');
-console.log('Media panel passed: real KCL footer/shared adapter, modal focus, PDF states/statuses, nested properties, native Escape handlers and bounded observers.');
+console.log('Media panel passed: real KCL footer/local adapter, modal focus, PDF states/statuses, nested properties, native Escape handlers and bounded observers.');
 JS;
 $javascript = str_replace('FIXTURE', $fixture, $javascript);
 $process = proc_open(['node', '-'], [0=>['pipe','r'], 1=>['pipe','w'], 2=>['pipe','w']], $pipes);

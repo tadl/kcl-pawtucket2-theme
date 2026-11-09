@@ -1,67 +1,43 @@
-# Runtime theme dependency
+# Application requirements
 
-KCL depends on the sibling `tadl` theme. Install its complete source under
-`themes/tadl/` before installing KCL under `themes/kcl/`, and preserve symlinks.
-The initial dependency was inspected at TADL commit
-`280b7eaf25d3e7ea8ccdfbfbb798443124831bd2` on Pawtucket 2.0.10.
-The current UI, accessibility and scoped-browse deployment is verified with
-TADL `12f2f11c186971713acd12d942908241ef47aca7`. Use that revision or a newer
-compatible TADL source when installing this KCL version.
+KCL is self-contained as a theme. There is no custom parent theme, symlink,
+sibling checkout, submodule or external theme path to install. Its controllers,
+helpers, plugins, views, configuration, CSS, scripts, fonts and adapted viewer
+are owned regular files. Historical `tadl*` symbols are internal names; source
+provenance is recorded in [BUNDLED_RUNTIME.md](BUNDLED_RUNTIME.md).
 
-`conf/app.conf` sets `inheritFrom = tadl` and
-`tadl_catalogue_root_idno = kcl`. The configured institution root must resolve
-to exactly one nondeleted top-level collection. Its complete descendant
-hierarchy supplies KCL's collection, object and representation boundary;
-native publication, bundle and ACL checks still apply within it. Missing or
-ambiguous configured roots deny catalogue results and direct record/media
-requests.
+Install the repository as `themes/kcl/` in a working Pawtucket 2.0.10 application
+connected to the intended Providence database and media. The verified web target
+is PHP 8.3. Pawtucket still supplies its standard libraries and application assets,
+including Bootstrap, jQuery, PDF.js, native media processing and optional Dompdf.
+The theme has no separate Composer or npm runtime installation.
 
-Pawtucket 2.0.10 applies inherited configuration after child definitions, which
-would replace KCL's root and browse definitions with TADL's. KCL therefore sets
-`allowThemeInheritance = 0` to disable that configuration merge. The native
-`View` resolver independently follows `inheritFrom`, so it still inherits the
-guarded TADL result views. Required application flags are explicit in KCL;
-assets are supplied explicitly instead of relying on native asset inheritance.
-Do not enable the configuration merge without checking effective runtime root,
-browse types and detail types with an actual application bootstrap.
+`conf/app.conf` sets `inheritFrom = 0`, `allowThemeInheritance = 0` and
+`tadl_catalogue_root_idno = kcl`. The institution root must resolve to exactly one
+nondeleted top-level collection. Its descendants supply the collection/object/
+representation boundary, supplemented by native publication, bundle, type/source
+and ACL checks. Missing, non-root or ambiguous configured roots deny material.
+Never replace a missing boundary with unrestricted native templates.
 
-`conf/media_display.conf` links directly to TADL's configuration. This preserves
-its document preview on issue pages and PDF.js in the full media overlay. View
-inheritance alone would fall back to the native application's inline PDF.js
-settings, which are unsuitable for the normal detail-page preview.
+The local `conf/media_display.conf` preserves the issue-page first-page preview
+and full PDF.js dialog. Native viewers, downloads, callbacks and media identifiers
+retain their original access checks. The physical fatal-error view supplies
+missing/private 404 responses; native fatal-error lookup does not use ordinary
+view resolution.
 
-Pawtucket does not inherit controllers, helpers or plugins. These relative
-directory links deliberately reuse the same tested implementation:
+Issue dates are profile text (`date.dates_value`), so decade links use native
+field-bound text search rather than normalized date facets. Fresh request-local
+scope limits native wildcard browse before metadata sorting; the later result
+and media guards remain. Keep native `cache_timeout = 0` to avoid stale results
+or permissions. The separate revision-checked result cache has its own flag.
 
-- `controllers -> ../tadl/controllers`
-- `helpers -> ../tadl/helpers`
-- `plugins -> ../tadl/plugins`
+The theme boundary does not protect an unrestricted static alias to the shared
+media tree. Provision the [exact-path media guard](support/MEDIA_ALLOWLIST.md),
+keep private application files outside public routes and isolate sessions/cache
+storage. For native Redis, give each application a distinct Redis database:
+Pawtucket 2.0.10 keys omit the application name. Optional face-focus suggestions
+use `conf/thumbnail_focus.conf`'s KCL-specific private directory; missing suggestions
+fall back to the native image without a detector service.
 
-Pawtucket preloads the active theme's helpers. PHP resolves `__DIR__` to the
-linked source files, so their internal relative includes remain within TADL.
-KCL supplies its own home page, page header/footer and newspaper issue view;
-inherited result/facet views retain institution filtering and result navigation.
-Keep the complete TADL dependency in place rather than replacing these views
-with unfiltered upstream defaults.
-
-Fatal-error lookup checks a physical active-theme file instead of the normal
-view resolver. KCL therefore has its own `views/system/fatal_error_html.php`;
-missing and outside records return a generic KCL 404, while unexpected failures
-remain server errors. The known native `ApplicationException('Invalid id')` on
-Detail requests is mapped specifically to 404.
-
-The theme boundary protects catalogue and controller-mediated media routes.
-It does not authorize publishing an unrestricted static alias to the shared
-Providence media tree. Review media storage URLs and web-server access rules
-when provisioning the instance; see `support/MEDIA_ALLOWLIST.md` for the installed
-exact-path guard. Keep its session and cache namespaces separate
-from other Pawtucket instances.
-For native Redis caching, use a distinct Redis database per installation:
-Pawtucket 2.0.10 Redis keys omit the application name. Keep native browse
-`cache_timeout = 0`; a positive native TTL does not validate current catalogue
-membership, publication or import changes. The separate TADL result cache has
-its own revision checks and configuration flag.
-
-Issue dates are profile text (`date.dates_value`), not native date attributes.
-Decade links must use the supported field-bound text search; a native
-`normalizedDates` facet cannot derive decades from this text field.
+Review native controllers, view APIs and the PDF keyboard/focus bridge when
+upgrading the application. No core patch is required by this theme.

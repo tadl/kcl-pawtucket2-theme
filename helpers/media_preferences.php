@@ -1,0 +1,93 @@
+<?php
+
+/** Read the browser's site-wide preference without putting it into navigation URLs. */
+function tadlMediaPreference($request) {
+	$cookies = $request->getParameters(array('COOKIE'));
+	$mode = $cookies['tadlMediaPreference'] ?? null;
+	if (in_array($mode, array('only', 'all'), true)) {
+		Session::setVar('tadlMediaPreference', $mode);
+		return $mode;
+	}
+	return Session::getVar('tadlMediaPreference') === 'only' ? 'only' : 'all';
+}
+
+/** Match the supported authority browse routes, including their AJAX requests. */
+function tadlMediaAuthorityBrowseTable($request, $type = null) {
+	if (!in_array($request->getController(), ['Browse', 'Search', 'MultiSearch'], true)) { return null; }
+	$browseType = $type ?: ($request->getParameter('browseType', pString) ?: $request->getAction());
+	return [
+		'people' => 'ca_entities', 'organizations' => 'ca_entities', 'families' => 'ca_entities',
+		'places' => 'ca_places', 'occurrences' => 'ca_occurrences'
+	][$browseType] ?? null;
+}
+
+/** The preference is not access control; only the two display modes are accepted. */
+function tadlSetMediaPreference($request, $mode) {
+	if (!in_array($mode, array('only', 'all'), true)) { return false; }
+	$options = tadlMediaPreferenceCookieOptions($request);
+	if (!setcookie('tadlMediaPreference', $mode, $options)) { return false; }
+	Session::setVar('tadlMediaPreference', $mode);
+	$request->setParameter('tadlMediaPreference', $mode, 'COOKIE');
+	return true;
+}
+
+function tadlMediaPreferenceCookieOptions($request) {
+	return array(
+		'expires' => time() + 31536000,
+		'path' => rtrim($request->getBaseUrlPath(), '/').'/',
+		'secure' => defined('__CA_SITE_PROTOCOL__')
+			? (__CA_SITE_PROTOCOL__ === 'https')
+			: (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+		'httponly' => true,
+		'samesite' => 'Lax'
+	);
+}
+
+/** Keep the active search/filters/display, but start at the first page when switching. */
+function tadlMediaPreferenceUrl($request) {
+	$params = array_intersect_key($request->getParameters(array('PATH', 'GET')), array_flip(array(
+		'search', 'key', 'facets', 'facet', 'id', 'removeCriterion', 'removeID', 'clear',
+		'view', 'sort', 'direction', 'n', 'per_page', '_advanced', 'source', 'label',
+		'collection_id', 'collection_view', 'object_id', 'entity_id', 'place_id', 'occurrence_id', 'set_id'
+	)));
+	$params = array_filter($params, function ($value) { return is_scalar($value); });
+	return caNavUrl($request, '*', '*', '*', $params, array('useQueryString' => true));
+}
+
+/** Save the displayed (filtered) IDs for detail-page Previous/Next navigation. */
+function tadlMediaResultContext($view, $result, $findType, $block = null) {
+	if (!$result || (!in_array($result->tableName(), array('ca_objects', 'ca_collections'), true)
+		&& $result->tableName() !== tadlMediaAuthorityBrowseTable($view->request, $block))) { return; }
+	$context = new ResultContext($view->request, $result->tableName(), $findType, $block);
+	if ($view->getVar('tadl_embedded_results')) {
+		// setResultList() updates native search history, so set its expression first.
+		$context->setSearchExpression($view->getVar('tadl_search_expression'));
+		$context->setParameter('key', null);
+		$context->setCurrentSort($view->getVar('sort'));
+		$context->setCurrentSortDirection($view->getVar('sort_direction'));
+	}
+	$limit = (int)$view->request->config->get('maximum_find_result_list_values');
+	if ($limit < 10) { $limit = 1000; }
+	$result->seek(max(0, (int)$view->getVar('start') - (int)floor($limit / 2)));
+	$ids = $result->getPrimaryKeyValues($limit);
+	$context->setResultList($ids);
+	$context->setSearchHistory($result->numHits());
+	$context->setParameter('media', null);
+	// Replace this on every render so a later search cannot inherit an unrelated return link.
+	$context->setParameter('tadl_result_return', $findType === 'multisearch' ? null : $view->getVar('tadl_result_return'));
+	if ($view->getVar('tadl_page_size') && method_exists($context, 'setItemsPerPage')) {
+		$context->setItemsPerPage((int)$view->getVar('tadl_page_size'));
+		$context->setParameter('n', (int)$view->getVar('tadl_page_size'));
+	}
+	if (in_array($view->getVar('view'), ['images', 'list', 'tiles'], true) && method_exists($context, 'setCurrentView')) {
+		$context->setCurrentView($view->getVar('view'));
+	}
+	// Native Search does not initialize contexts for embedded server fragments
+	// (or legacy AJAX callers). Activate the filtered IDs for detail navigation.
+	if (($view->getVar('tadl_embedded_results') || $view->request->isAjax()) && in_array($findType, ['search', 'search_advanced'], true)
+		&& !$view->request->getParameter('dontSetFind', pInteger) && !$view->request->getParameter('getFacet', pInteger)) {
+		$context->setAsLastFind(false);
+	}
+	$context->saveContext();
+	$result->seek(0);
+}

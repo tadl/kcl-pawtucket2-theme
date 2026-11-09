@@ -1,7 +1,7 @@
 # KCL Pawtucket theme
 
-Read `README.md` and `DEPENDENCIES.md` before changes. This theme reuses the
-sibling TADL runtime through deliberate relative links and view inheritance.
+Read `README.md` and `DEPENDENCIES.md` before changes. KCL owns its runtime;
+no sibling theme, symlink or custom view/config inheritance may be required.
 
 - Keep this focused on a single newspaper archive; preserve the supplied copy.
 - Preserve native access checks and document-viewer initialization.
@@ -9,10 +9,12 @@ sibling TADL runtime through deliberate relative links and view inheritance.
 - No instance or production actions are authorized by these files.
 - Do not treat object-only menus or facets as a collection access boundary.
 - Keep the configured `kcl` hierarchy boundary and guarded direct-media map.
-- Do not enable configuration inheritance without a native runtime check;
-  Pawtucket 2.0.10 otherwise overwrites child configuration with parent values.
+- Keep all custom runtime, views, assets and configuration local regular files.
+  Keep `inheritFrom = 0` and configuration inheritance disabled.
 - Keep credentials, catalogue data, logs and preview output outside Git.
 - Run `php support/check_config.php` against the workspace Pawtucket source,
   lint changed PHP, and check responsive layout when changing the views or CSS.
+- Run `php tests/standalone_test.php /path/to/pawtucket2` for dependency changes.
+  Native application libraries are allowed; another custom theme is not.
 - Work on `main`; commit coherent verified changes. Source commits and pushes
   remain separate from instance setup and deployment.

@@ -1,0 +1,45 @@
+name: Standalone theme checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: kcl
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: kcl
+          persist-credentials: false
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: '24'
+      - name: Install PHP 8.3 test extensions
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y php8.3-cli php8.3-xml php8.3-mbstring php8.3-sqlite3
+          sudo update-alternatives --set php /usr/bin/php8.3
+      - name: Fetch stock Pawtucket 2.0.10 reference
+        run: |
+          reference="$RUNNER_TEMP/pawtucket2"
+          git clone --filter=blob:none --sparse --depth=1 --branch 2.0.10 https://github.com/collectiveaccess/pawtucket2.git "$reference"
+          test "$(git -C "$reference" rev-parse HEAD)" = 3d4fac153fa623c0ed93907500377aeb37666c10
+          git -C "$reference" sparse-checkout set app/lib app/conf assets/bootstrap assets/jquery assets/pdfjs themes/default
+          echo "KCL_REFERENCE_ROOT=$reference" >> "$GITHUB_ENV"
+      - name: Check syntax
+        run: |
+          find controllers helpers plugins support tests views -name '*.php' -print0 | xargs -0 -n 1 php -l
+          for script in assets/pawtucket/js/*.js; do node --check "$script"; done
+          bash -n support/deploy-theme.sh
+      - name: Check native configuration and standalone regressions
+        run: |
+          php support/check_config.php "$KCL_REFERENCE_ROOT"
+          for test_file in tests/*_test.php; do php "$test_file" "$KCL_REFERENCE_ROOT" || exit 1; done

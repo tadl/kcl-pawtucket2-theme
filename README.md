@@ -1,34 +1,39 @@
 # KCL newspaper archive theme
 
-A small Pawtucket 2.0.10 theme for Kalkaska County Library's single newspaper
-collection, covering 1879–2012. It lives beside `tadl/` and `ncf/` and reuses
-TADL's tested collection boundary and result/media runtime. Install the complete
-sibling TADL theme as described in [DEPENDENCIES.md](DEPENDENCIES.md).
+A standalone Pawtucket 2.0.10 theme for Kalkaska County Library's single newspaper
+collection, covering 1879–2012. Install this checkout as `themes/kcl/`; no TADL
+theme, sibling checkout, symlink, submodule, Composer install or frontend build
+is required. See [DEPENDENCIES.md](DEPENDENCIES.md) for application prerequisites.
 
-The landing page includes a prominent newspaper search, a browse-all link,
-15 decade links, and the supplied welcome, OCR and use text. Issue details use
-TADL's page preview on the left, with the issue title, metadata, navigation and
-media actions on the right. Narrow screens stack the columns. Imported filename
-captions are omitted. Available OCR has an access-checked HTML text disclosure.
-The modal reuses TADL's background scroll lock and focus handling;
-closing it restores the issue page. The public navigation has no multi-collection
-directory, gallery or account menu.
+The home page has newspaper search, browse-all and 15 decade links, plus the
+supplied welcome, OCR and use text. Issue details put the preview on the left and
+title, metadata, result navigation and native media actions on the right; narrow
+screens stack the columns. Imported filename captions are omitted. Available OCR
+has an access-checked HTML disclosure. The document dialog preserves native
+initialization, locks background scrolling and restores focus when closed.
 
-## Design and content
+## Design and source
 
 Branding follows [KCL's website](https://www.kalkaskalibrary.org/): white space,
-navy `#243f5d`, green `#267a38`, Lato, and a muted gray search border. The default
-theme already supplies the Lato fonts; no external font service is requested.
-Search focus darkens the existing border without adding an overlapping ring.
-The supplied archive wording is preserved, including its fair-use link.
-See [ACCESSIBILITY.md](ACCESSIBILITY.md) for the WCAG 2.2 review, checks and limits.
+navy `#243f5d`, green `#267a38`, Lato and a muted gray search border that darkens
+on focus. All theme CSS, JavaScript, fonts and viewer adaptations are local files.
+No external font service is requested. The supplied archive wording is preserved,
+including its fair-use link. See [ACCESSIBILITY.md](ACCESSIBILITY.md) for the
+review, checks and document-content limits.
 
 - Page chrome: `views/pageFormat/`.
-- Homepage and decade links: `views/Front/front_page_html.php`.
-- OCR and use text: `views/About/archive_text_html.php`.
+- Home page and decade links: `views/Front/front_page_html.php`.
+- Archive text: `views/About/archive_text_html.php`.
 - Issue details: `views/Details/ca_objects_default_html.php`.
-- Colors and responsive layout: `assets/pawtucket/css/theme.css`.
+- KCL styling: `assets/pawtucket/css/theme.css`; owned base UI: `css/base.css`.
+- Scope, access, browse and media behavior: `controllers/`, `helpers/`, `plugins/`.
 - Issue date mapping: `conf/global.conf`.
+
+The runtime was adapted from the TADL theme and now belongs to this repository;
+future TADL changes do not propagate into KCL. Historical `tadl*` function/class
+names, CSS classes and configuration keys remain internal compatibility names.
+They do not load another theme. [BUNDLED_RUNTIME.md](BUNDLED_RUNTIME.md) records
+source provenance and licenses.
 
 The logo and favicon are local copies of KCL's published assets, retrieved
 November 9, 2026:
@@ -37,81 +42,83 @@ November 9, 2026:
 - [Library mark](https://www.kalkaskalibrary.org/wp-content/uploads/2024/07/cropped-KCL-Blue-Green-Mark-1-32x32.png).
 
 Library branding remains its owner's property. Theme code follows
-CollectiveAccess's GPLv3 license; native media-panel setup and the issue template
-are adapted from the default theme, copyright Whirl-i-Gig. See `LICENSE`.
+CollectiveAccess's GPLv3 license; source notices are retained. Bundled Lato is
+licensed under SIL OFL 1.1. See `LICENSE` and `assets/pawtucket/css/Lato/OFL.txt`.
 
 ## Runtime and deployment
 
 The initial instance was provisioned November 9, 2026 at
 [history.kalkaskalibrary.org](https://history.kalkaskalibrary.org/), with a
-separate Pawtucket 2.0.10 installation. The newspaper import is ongoing;
-available records and indexed text grow as it finishes. The planned upgrade to
-2.0.12 is separate work; recheck the inheritance workaround during that upgrade.
+separate Pawtucket 2.0.10 installation. Archive coverage and indexed text grow
+while import proceeds. The planned 2.0.12 upgrade is separate work; review the
+native controller and viewer API adaptations during that upgrade.
 
-- `tadl_catalogue_root_idno = kcl` restricts results, record details and native
-  media routes to the actual KCL hierarchy. Missing or ambiguous roots deny
-  material. Native publication, bundle, type/source and ACL checks still apply.
-- The date mapping is `date.dates_value`, a text attribute containing ISO issue
-  dates. Decade links use native field-bound prefix queries, such as
-  `ca_objects.date.dates_value:187*`, and chronological sorting. They do not use
-  native `normalizedDates`, which requires date-typed storage.
-- Controllers/helpers/plugins and selected assets link to the sibling TADL
-  source. Keep relative links intact. Required application flags are explicit:
-  native configuration inheritance is disabled because 2.0.10 would let parent
-  settings overwrite KCL's root. View inheritance remains enabled independently.
-- The physical `views/system/fatal_error_html.php` supplies KCL recovery pages
-  and correct missing/private-record statuses. Native fatal-error lookup does
-  not use ordinary view inheritance.
-- Public search history uses sessions rather than database search logging.
-  Result caching is disabled while import is running. Comments, sharing,
-  lightboxes, registration and record-summary PDF export are disabled.
-- The deployed native cache uses Redis. Give each Pawtucket installation its
-  own Redis database: native 2.0.10 Redis keys do not include the application
-  name. Native browse-result TTL remains disabled to keep catalogue changes fresh.
+- `tadl_catalogue_root_idno = kcl` bounds results, details and media to the actual
+  KCL hierarchy. Missing or ambiguous roots deny material. Native publication,
+  bundle, type/source and ACL checks still apply.
+- Date mapping is text `date.dates_value`. Decade links use native field-bound
+  ISO-prefix queries, such as `ca_objects.date.dates_value:187*`, and chronological
+  sorting. Native `normalizedDates` requires date-typed storage and is not used.
+- Custom runtime, views, configuration and theme assets are regular local files.
+  `inheritFrom = 0` and `allowThemeInheritance = 0`; standard application defaults
+  and libraries remain supplied by Pawtucket itself.
+- Browse applies fresh hierarchy membership before native metadata sorting,
+  retains native access/order/paging/context and checks scope again afterward.
+- Public search history uses sessions. Native browse TTL and theme result reuse
+  remain disabled during import. Comments, sharing, lightboxes, registration and
+  record-summary PDF export are disabled.
+- Native cache uses Redis in its own database: Pawtucket 2.0.10 Redis keys do not
+  include the application name. Keep sessions and cache storage isolated.
 - Direct static media needs the exact-path Apache allowlist described in
-  [MEDIA_ALLOWLIST.md](support/MEDIA_ALLOWLIST.md). The installed read-only
-  generator refreshes it each minute; PDF byte-range delivery remains native.
-  Do not expose the shared media tree through an unguarded alternate alias or
-  enable the unguarded Tilepic PHP extractor.
+  [MEDIA_ALLOWLIST.md](support/MEDIA_ALLOWLIST.md). PDF byte-range delivery remains
+  native. Never expose the shared media tree through an unguarded alias or enable
+  the unguarded Tilepic PHP extractor.
 
-In the enclosing workspace, `./deploy kcl` installs the TADL runtime dependency
-into the KCL instance, then this theme. `./deploy tadl` updates only the TADL
-instance; no argument updates both. `./deploy --dry-run kcl` previews transfers.
-Routine theme deployment preserves application caches, sessions and services.
-The workstation wrapper delegates to TADL's tracked `support/deploy-themes.sh`.
+From this checkout, deploy only KCL with:
 
-After import completes, verify full archive coverage and finish the legacy
-Omeka URL redirects using the completed crosswalk. Do not guess object matches
-from duplicate identifiers. The theme uses native OCR indexing and does not
-perform OCR or change catalogue records itself.
+```sh
+bash support/deploy-theme.sh --dry-run user@catalog.example.org
+bash support/deploy-theme.sh user@catalog.example.org
+```
 
-## Local checks and layout preview
+Replace the synthetic target with the operator's SSH host. The helper targets
+`/var/www/kcl/themes/kcl`, preserves caches/sessions/services and does not delete
+server files. Inspect server-local overrides before using it. Deploying requires
+operator authorization; cloning or pushing source is not deployment approval.
 
-Use PHP 8+, Node.js and a local Pawtucket 2.0.10 source tree. The default source
-path is the workspace's sibling `pawtucket2/`; pass another path when working elsewhere.
-The checks below never load application `setup.php` or a database. The separate
-production media-map generator deliberately loads the configured application.
+The optional enclosing workspace wrapper supports `./deploy kcl`, `./deploy tadl`
+and `./deploy` for both independent themes. KCL selection calls this repository's
+own helper and works without a TADL checkout.
+
+After import, verify full coverage and finish legacy Omeka redirects from the
+completed crosswalk. Do not guess matches from duplicate identifiers. The theme
+displays existing OCR and uses native search; it does not process catalogue data.
+
+## Checks and layout preview
+
+Use PHP 8.3 with DOM, mbstring, SQLite, fileinfo and `proc_open`, Node.js and a
+stock Pawtucket 2.0.10 reference checkout. Tests are synthetic and do not load a
+configured application or database. Pass the reference path explicitly:
 
 ```sh
 php support/check_config.php /path/to/pawtucket2
-php tests/decade_links_test.php
-php tests/assets_test.php
-php tests/media_display_test.php
-php tests/media_panel_test.php
-php tests/semantic_html_test.php
-php tests/error_view_test.php
-php tests/media_allowlist_test.php
-find views support -name '*.php' -exec php -l {} \;
+for test_file in tests/*_test.php; do php "$test_file" /path/to/pawtucket2 || exit 1; done
 ```
 
-For a static preview of the actual homepage views, choose a new or empty output
-directory, then serve that directory locally:
+`tests/standalone_test.php` copies KCL into a private temporary directory with no
+sibling custom theme. It exercises the actual native view resolver, configuration,
+assets, media/access regressions and static preview while blocking reads from the
+original sibling themes. `tests/deploy_theme_test.php` uses synthetic transfer
+tools; it never contacts a server. GitHub Actions checks KCL against stock
+Pawtucket only.
+
+For a static preview of the actual home-page views, choose a new or empty output
+directory, then serve it locally:
 
 ```sh
 php support/render_preview.php /path/to/pawtucket2 /tmp/kcl-preview
 php -S 127.0.0.1:8765 -t /tmp/kcl-preview
 ```
 
-The preview copies only layout assets and uses synthetic framework adapters.
-It checks appearance without a live catalogue; search, browse, cookies and the
-document viewer require Pawtucket. Keep preview output outside the theme.
+Search, catalogue data, cookies and document viewing need a running application.
+Keep generated previews and operational files outside this repository.

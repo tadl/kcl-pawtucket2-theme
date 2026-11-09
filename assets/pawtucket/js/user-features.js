@@ -1,0 +1,274 @@
+/* Bootstrap 3.0 handles the menu but does not update its accessible state. */
+(function ($) {
+    'use strict';
+    $(document).on('shown.bs.dropdown hidden.bs.dropdown', '.dropdown, .btn-group', function (event) {
+        $(this).children('[data-toggle="dropdown"]').attr('aria-expanded', event.type === 'shown' ? 'true' : 'false');
+    });
+    $(document).on('shown.bs.collapse hidden.bs.collapse', '#bs-main-navbar-collapse-1', function (event) {
+        $('.tadl-header .navbar-toggle').attr('aria-expanded', event.type === 'shown' ? 'true' : 'false');
+    });
+    // Native navigation lists use normal Tab order rather than ARIA menu roles.
+    $(document).on('keydown', '.dropdown-menu', function (event) {
+        if (event.key !== 'Escape') { return; }
+        var toggle = $(this).parent('.open').children('[data-toggle="dropdown"]');
+        if (toggle.length) {
+            event.preventDefault();
+            event.stopPropagation();
+            toggle.dropdown('toggle').trigger('focus');
+        }
+    });
+    $(document).on('keydown', '#bMorePanel', function (event) {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            $('#bMorePanelClose').trigger('click');
+        }
+    });
+})(jQuery);
+
+/* Keep collapse actions after the full value, including metadata loaded into galleries. */
+(function () {
+    'use strict';
+    document.addEventListener('toggle', function (event) {
+        var details = event.target;
+        if (!details.matches || !details.matches('details.tadl-long-field-details')) { return; }
+        var summary = details.querySelector(':scope > summary');
+        var full = details.querySelector(':scope > .tadl-long-field-full');
+        var collapse = details.querySelector(':scope > .tadl-long-field-collapse');
+        if (!summary || !full || !collapse) { return; }
+        var openingFocus = details.open && document.activeElement === summary;
+        summary.hidden = details.open;
+        collapse.hidden = !details.open;
+        collapse.setAttribute('aria-expanded', details.open ? 'true' : 'false');
+        if (openingFocus) { full.tabIndex = -1; full.focus({preventScroll:true}); }
+    }, true);
+    document.addEventListener('click', function (event) {
+        var collapse = event.target.closest('.tadl-long-field-collapse');
+        var details = collapse && collapse.parentElement;
+        if (!details || !details.matches('details.tadl-long-field-details')) { return; }
+        event.preventDefault();
+        var summary = details.querySelector(':scope > summary');
+        summary.hidden = false;
+        details.open = false;
+        // The focused collapse button is about to disappear with the full text.
+        summary.focus();
+    });
+})();
+
+/* Offer a return to the header only after the first screenful of the page. */
+(function () {
+    'use strict';
+    function initializeBackToTop() {
+        var link = document.querySelector('[data-tadl-back-to-top]');
+        if (!link) { return; }
+        var top = document.getElementById('tadl-page-top');
+        if (!top) { return; }
+        var pending = false;
+        function updateVisibility() {
+            var hidden = window.scrollY <= window.innerHeight;
+            if (link.hidden !== hidden) { link.hidden = hidden; }
+        }
+        function scheduleUpdate() {
+            if (pending) { return; }
+            pending = true;
+            window.requestAnimationFrame(function () { pending = false; updateVisibility(); });
+        }
+        window.addEventListener('scroll', scheduleUpdate, {passive:true});
+        window.addEventListener('resize', scheduleUpdate);
+        window.addEventListener('pageshow', scheduleUpdate);
+        link.addEventListener('click', function (event) {
+            event.preventDefault();
+            // Move focus before the scrolled-up page hides its triggering link.
+            top.focus({preventScroll:true});
+            window.scrollTo({top:0, behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
+        });
+        updateVisibility();
+    }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initializeBackToTop); }
+    else { initializeBackToTop(); }
+})();
+
+/* Copy a clean object permalink without carrying the visitor's result-set state. */
+(function () {
+    'use strict';
+    function initializeCitations() {
+        document.querySelectorAll('[data-tadl-citation]').forEach(function (widget) {
+            var url;
+            try { url = new URL(widget.dataset.citationPath, window.location.origin); }
+            catch (error) { return; }
+            if (!/^https?:$/.test(url.protocol) || url.origin !== window.location.origin) { return; }
+            url.search = ''; url.hash = '';
+            var citation = widget.dataset.citationCredit + ', ' + url.href;
+            var button = widget.querySelector('[data-tadl-copy-citation]');
+            var label = button.querySelector('[data-tadl-citation-label]');
+            var copyLabel = label.textContent;
+            var status = widget.querySelector('[data-tadl-citation-status]');
+            var text = widget.querySelector('[data-tadl-citation-text]');
+            text.value = citation;
+            function manualCopy() {
+                status.classList.remove('sr-only');
+                status.textContent = widget.dataset.citationFallback;
+                text.hidden = false;
+                text.focus();
+                text.select();
+            }
+            button.addEventListener('click', async function () {
+                label.textContent = copyLabel;
+                status.classList.add('sr-only');
+                status.textContent = '';
+                try {
+                    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') { manualCopy(); return; }
+                    await navigator.clipboard.writeText(citation);
+                    text.hidden = true;
+                    label.textContent = widget.dataset.citationButtonCopied;
+                    status.textContent = widget.dataset.citationCopied;
+                } catch (error) { manualCopy(); }
+            });
+            widget.hidden = false;
+        });
+    }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initializeCitations); }
+    else { initializeCitations(); }
+})();
+
+/* Native sorting/media disclosures also work when JavaScript is off. */
+(function () {
+    'use strict';
+    function closeOutside(event) {
+        document.querySelectorAll('.tadl-results-sort[open], .tadl-media-preference-menu[open]').forEach(function (menu) {
+            if (!menu.contains(event.target)) { menu.open = false; }
+        });
+    }
+    document.addEventListener('click', closeOutside);
+    document.addEventListener('focusin', closeOutside);
+    // Own the keyup before Pawtucket's document-level viewer Escape handlers.
+    document.addEventListener('keyup', function (event) {
+        if (event.key !== 'Escape') { return; }
+        var menu = event.target.closest('.tadl-results-sort[open], .tadl-media-preference-menu[open]');
+        if (!menu) { return; }
+        event.preventDefault();
+        event.stopPropagation();
+        menu.open = false;
+        menu.querySelector('summary').focus();
+    }, true);
+})();
+
+/* Keep the native AJAX viewer/panel lifecycle, with keyboard and modal semantics. */
+(function () {
+    'use strict';
+    window.tadlAccessiblePanel = function (controller, panel) {
+        if (!panel) { return; }
+        var opener, background = [], open = false;
+        var onOpen = controller.onOpenCallback, onFinally = controller.finallyCallback;
+        function controls() {
+            return Array.prototype.filter.call(panel.querySelectorAll('a[href],button,input:not([type="hidden"]),select,textarea,summary,[tabindex]'), function (node) {
+                return !node.disabled && node.tabIndex >= 0 && node.getClientRects().length && !node.closest('[inert]');
+            }).sort(function (a, b) {
+                // Positive tabindex values precede the normal DOM tab order.
+                return (a.tabIndex || Infinity) - (b.tabIndex || Infinity);
+            });
+        }
+        function focusContent() {
+            if (!open || (document.activeElement !== panel && panel.contains(document.activeElement))) { return; }
+            var target = panel.querySelector('[data-tadl-error-summary], .tadl-dialog-close, .close a, .close button, button.close, a.close');
+            if (target && target.getClientRects().length) { target.focus(); }
+            else { panel.focus(); }
+        }
+        controller.onOpenCallback = function () {
+            if (!open) {
+                open = true;
+                opener = document.activeElement;
+                // A panel may live inside main rather than directly under body.
+                // Hide siblings along that path without hiding the dialog itself.
+                var branch = panel, parent = panel.parentElement || document.body, siblings = [];
+                while (parent) {
+                    siblings = siblings.concat(Array.prototype.filter.call(parent.children, function (node) {
+                        return node !== branch && !/^(SCRIPT|STYLE|LINK)$/.test(node.tagName);
+                    }));
+                    if (parent === document.body) { break; }
+                    branch = parent;
+                    parent = parent.parentElement;
+                }
+                background = siblings.map(function (node) {
+                    var saved = {node: node, inert: node.hasAttribute('inert'), hidden: node.getAttribute('aria-hidden')};
+                    node.setAttribute('inert', ''); node.setAttribute('aria-hidden', 'true');
+                    return saved;
+                });
+                panel.setAttribute('aria-hidden', 'false');
+                panel.focus();
+            }
+            if (onOpen) { onOpen.apply(controller, arguments); }
+            focusContent();
+        };
+        controller.finallyCallback = function () {
+            open = false;
+            background.forEach(function (saved) {
+                if (!saved.inert) { saved.node.removeAttribute('inert'); }
+                if (saved.hidden === null) { saved.node.removeAttribute('aria-hidden'); }
+                else { saved.node.setAttribute('aria-hidden', saved.hidden); }
+            });
+            background = [];
+            if (opener && opener.isConnected && opener.getClientRects().length) { opener.focus(); }
+            else {
+                var main = document.querySelector('#main');
+                if (main) { main.focus(); }
+            }
+            panel.setAttribute('aria-hidden', 'true');
+            if (onFinally) { onFinally.apply(controller, arguments); }
+        };
+        // The native onOpen callback precedes the .load() completion. Focus the
+        // close control after AJAX content arrives, without stealing focus on slides.
+        new MutationObserver(focusContent).observe(panel, {childList: true, subtree: true});
+        document.addEventListener('keydown', function (event) {
+            if (!open || event.key !== 'Tab') { return; }
+            var items = controls(), index = items.indexOf(document.activeElement);
+            if (!items.length) { event.preventDefault(); panel.focus(); return; }
+            if (index < 0 || (event.shiftKey && index === 0) || (!event.shiftKey && index === items.length - 1)) {
+                event.preventDefault(); items[event.shiftKey ? items.length - 1 : 0].focus();
+            }
+        }, true);
+        // Browsers without inert still need programmatic focus kept inside the dialog.
+        document.addEventListener('focusin', function (event) {
+            if (open && !panel.contains(event.target)) { panel.focus(); }
+        });
+    };
+})();
+
+/* Error summaries and motion preferences apply to normal pages as well as panels. */
+(function () {
+    'use strict';
+    document.addEventListener('DOMContentLoaded', function () {
+        var summary = document.querySelector('[data-tadl-error-summary]');
+        if (summary) { summary.focus(); }
+    });
+    if (window.matchMedia && jQuery.fx) {
+        var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        function updateMotion() { jQuery.fx.off = reducedMotion.matches; }
+        updateMotion();
+        if (reducedMotion.addEventListener) { reducedMotion.addEventListener('change', updateMotion); }
+    }
+})();
+
+/* Photo shortcuts reuse the visible controls, including native player callbacks. */
+(function () {
+    'use strict';
+    var navigation = '#detailRepNav button, .tadl-gallery-media-stage .galleryDetailPrevious, .tadl-gallery-media-stage .galleryDetailNext';
+    document.addEventListener('keydown', function (event) {
+        if (event.defaultPrevented || event.isComposing || event.repeat || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey
+            || (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')) { return; }
+        // Dialogs and the full image viewer own their keys (the canvas arrows pan).
+        if (document.querySelector('[aria-modal="true"][aria-hidden="false"], dialog[open]')) { return; }
+        var target = event.target;
+        if (!target || !target.closest) { return; }
+        if (!target.closest(navigation) && target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), video, audio, canvas, button, summary, [role="slider"], [role="tab"], [role="menu"], [role="listbox"], [role="tree"], [role="combobox"]')) { return; }
+        var previous = event.key === 'ArrowLeft';
+        var button = document.querySelector(previous ? '.tadl-object-detail #detailRepNavPrev' : '.tadl-object-detail #detailRepNavNext');
+        if (!button) {
+            var gallery = document.querySelector('.tadl-gallery-detail #galleryDetailImageArea');
+            if (!gallery || gallery.getAttribute('aria-busy') === 'true') { return; }
+            button = gallery.querySelector(previous ? '.galleryDetailPrevious' : '.galleryDetailNext');
+        }
+        if (!button || button.disabled || !button.getClientRects().length || button.closest('[inert], [aria-hidden="true"]')) { return; }
+        event.preventDefault();
+        button.click();
+    });
+})();

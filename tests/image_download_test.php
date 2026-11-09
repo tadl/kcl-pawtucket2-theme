@@ -1,0 +1,698 @@
+<?php
+/** Synthetic models and media-plugin boundary; no application bootstrap or database. */
+error_reporting(E_ALL);
+set_error_handler(function ($severity, $message, $file, $line) {
+	if (!(error_reporting() & $severity)) { return false; }
+	// Older bundled dependencies emit PHP 8.5 deprecations; keep theme warnings strict.
+	if ($severity === E_DEPRECATED && getenv('KCL_TEST_COMPOSER_AUTOLOAD') && str_contains($file, '/vendor/')) { return true; }
+	throw new ErrorException($message, 0, $severity, $file, $line);
+});
+define('__CA_ACL_READONLY_ACCESS__', 1);
+define('pInteger', 1);
+define('pString', 2);
+$directory = sys_get_temp_dir().'/tadl-download-test-'.bin2hex(random_bytes(8));
+mkdir($directory.'/lib/pawtucket', 0700, true);
+foreach (['pawtucket/BasePawtucketController.php', 'Media.php'] as $file) {
+	file_put_contents($directory.'/lib/'.$file, '<?php');
+}
+ini_set('error_log', $directory.'/diagnostics.log');
+define('__CA_LIB_DIR__', $directory.'/lib');
+$fixtures = [
+	'png' => 'iVBORw0KGgoAAAANSUhEUgAAAA0AAAAHEAIAAAAMgowOAAAAR0lEQVQoz2NUUcnImDGDgUqA0eVo9Z8FCtQyjkVxgchk9naqua6NbbHyen2quU5hgTA1XXfc/ZTXPjuqGff8+d27R49SyzgAxTUT4P6pWkYAAAAASUVORK5CYII=',
+	'jpg' => '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/2wBDAQMDAwQDBAgEBAgQCwkLEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBD/wAARCAAHAA0DAREAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAZEAABBQAAAAAAAAAAAAAAAAAEAAIYVJH/xAAWAQEBAQAAAAAAAAAAAAAAAAAABQb/xAAYEQADAQEAAAAAAAAAAAAAAAAAAhZRAf/aAAwDAQACEQMRAD8Ar8RgK4+tVWubemdlVwRGArj61K5t6JVcP//Z',
+	'tiff' => 'SUkqACoCAAAkJGhomJgkJGhomJgkJGhomJgkJGhomJgkJGhomJgkJGhomJgkJGhomJgkJGhomJgkJGhomJgkJGhomJgkJGhomJgkJGhomJgkJGhomJjFRPx7IKDFRPx7IKDFRPx7IKDFRPx7IKDFRPx7IKDFRPx7IKDFRPx7IKDFRPx7IKDFRPx7IKDFRPx7IKDFRPx7IKDFRPx7IKDFRPx7IKBlZY+Pp6dlZY+Pp6dlZY+Pp6dlZY+Pp6dlZY+Pp6dlZY+Pp6dlZY+Pp6dlZY+Pp6dlZY+Pp6dlZY+Pp6dlZY+Pp6dlZY+Pp6dlZY+Pp6cGhiOjL68GhiOjL68GhiOjL68GhiOjL68GhiOjL68GhiOjL68GhiOjL68GhiOjL68GhiOjL68GhiOjL68GhiOjL68GhiOjL68GhiOjL6+mpra2trampra2trampra2trampra2trampra2trampra2trampra2trampra2trampra2trampra2trampra2trampra2trampra2trZHx0rKPr5Hx0rKPr5Hx0rKPr5Hx0rKPr5Hx0rKPr5Hx0rKPr5Hx0rKPr5Hx0rKPr5Hx0rKPr5Hx0rKPr5Hx0rKPr5Hx0rKPr5Hx0rKPr7n593dxcXn593dxcXn593dxcXn593dxcXn593dxcXn593dxcXn593dxcXn593dxcXn593dxcXn593dxcXn593dxcXn593dxcXn593dxcUPAAABAwABAAAADQAAAAEBAwABAAAABwAAAAIBAwADAAAA5AIAAAMBAwABAAAAAQAAAAYBAwABAAAAAgAAAAoBAwABAAAAAQAAABEBBAABAAAACAAAABIBAwABAAAAAQAAABUBAwABAAAAAwAAABYBAwABAAAABwAAABcBBAABAAAAIgIAABwBAwABAAAAAQAAACkBAwACAAAAAAABAD4BBQACAAAAGgMAAD8BBQAGAAAA6gIAAAAAAAAQABAAEACF61EAAACAAMP1qAAAAAACzcxMAAAAAAHNzEwAAACAAM3MTAAAAAACj8L1AAAAABA3GqAAAAAAAiuHCgAAACAA'
+];
+// Synthetic 13x7, 24-bit BMP with padded rows. Exercise actual BMP bytes rather
+// than relabeling another image, including conversion through ImageMagick.
+$bmpPixels = str_repeat(str_repeat("\x33\x66\x99", 13)."\0", 7);
+$fixtures['bmp'] = base64_encode('BM'.pack('VvvV', 54 + strlen($bmpPixels), 0, 0, 54)
+	.pack('V3v2V6', 40, 13, 7, 1, 24, 0, strlen($bmpPixels), 0, 0, 0, 0).$bmpPixels);
+foreach ($fixtures as $format => $bytes) { file_put_contents($directory.'/image.'.$format, base64_decode($bytes, true)); }
+file_put_contents($directory.'/not-image', 'Synthetic non-image content');
+register_shutdown_function(function () use ($directory) {
+	foreach (glob($directory.'/*') as $file) { if (is_file($file)) { unlink($file); } }
+	foreach (['pawtucket/BasePawtucketController.php', 'Media.php'] as $file) { unlink($directory.'/lib/'.$file); }
+	rmdir($directory.'/lib/pawtucket'); rmdir($directory.'/lib'); rmdir($directory);
+});
+$assertions = 0;
+function checkDownload($condition, $message) {
+	$GLOBALS['assertions']++;
+	if (!$condition) { throw new RuntimeException($message); }
+}
+function _t($text) { return $text; }
+function caGetUserAccessValues($request) { return [1]; }
+function caACLIsEnabled($object, $options) { return $object->values['acl'] ?? false; }
+function caObjectsDisplayDownloadLink($request, $objectID, $representation) { return $request->allowed; }
+function caGetAvailableDownloadVersions($request, $mime) { return $request->versions; }
+function caNavUrl($request, $module, $controller, $action, $params = []) { return '/'.$controller.'/'.$action.'?'.http_build_query($params); }
+function caDetailLink($request, $content, $class, $table, $id) {
+	checkDownload($table === 'ca_objects', 'Gallery image linked to the wrong record table.');
+	return '<a href="/Detail/objects?object_id='.(int)$id.'">'.$content.'</a>';
+}
+class DownloadConfig {
+	function __construct(public array $values = []) {}
+	function get($key) { return $this->values[$key] ?? ($key === 'pawtucket_requires_login' && ($GLOBALS['requiresLogin'] ?? false)); }
+}
+class DownloadRequest {
+	public bool $allowed = true;
+	public array $versions = ['original'];
+	public DownloadConfig $config;
+	public object $user;
+	public string $controller = 'Detail';
+	function __construct(public array $params = [], public string $method = 'GET', public bool $loggedIn = false) { $this->config = new DownloadConfig(); $this->user = new stdClass(); }
+	function getParameter($key, $type) { return $this->params[$key] ?? null; }
+	function parameterExists($key) { return array_key_exists($key, $this->params) ? true : null; }
+	function getRequestMethod() { return $this->method; }
+	function getUserID() { return $this->loggedIn ? 7 : null; }
+	function isLoggedIn() { return $this->loggedIn; }
+	function getController() { return $this->controller; }
+}
+class DownloadModel {
+	public array $values = ['access' => 1, 'deleted' => 0, 'original_filename' => 'Synthetic scan.tif'];
+	public array $rows = [];
+	public bool $readable = true;
+	public bool $loadable = true;
+	public array $info = [];
+	public string $path = '';
+	function __construct(public string $table, public int $id) {}
+	function tableName() { return $this->table; }
+	function tableNum() { return 57; }
+	function getPrimaryKey() { return $this->id; }
+	function get($key) { return $this->values[$key] ?? null; }
+	function load($id) { return $this->loadable && $this->id === $id; }
+	function isReadable($request, $bundle = null) { return $this->readable && !in_array($bundle, $this->values['denied'] ?? [], true); }
+	function checkACLAccessForUser($user) { return $this->values['acl_level'] ?? 1; }
+	function getRepresentations($versions, $sizes, $options) {
+		checkDownload($options === ['simple' => true, 'checkAccess' => [1]], 'Native representation filtering changed.');
+		return $this->rows;
+	}
+	function getMediaInfo($field, $version, $key = null) {
+		return $key ? ($this->info[$key] ?? null) : $this->info;
+	}
+	function getMediaPath($field, $version) { return $this->path; }
+}
+class Datamodel { static function getInstance($table, $initialize) { return $GLOBALS['models'][$table] ?? null; } }
+class Media {
+	static public array $calls = [];
+	static public string $failure = '';
+	private string $source;
+	function __construct() { self::$calls[] = ['new']; }
+	function read($path) { $this->source = $path; self::$calls[] = ['read', $path]; return self::$failure !== 'read'; }
+	function get($key) { return $key === 'width' ? (self::$failure === 'dimensions' ? 14 : 13) : 7; }
+	function set($key, $value) { self::$calls[] = ['set', $key, $value]; }
+	function write($path, $mime) {
+		self::$calls[] = ['write', $mime];
+		if (self::$failure === 'write') { return false; }
+		if (!self::$failure && ($magick = getenv('KCL_TEST_MAGICK'))) {
+			$process = proc_open([$magick, $this->source.'[0]', '-quality', '90', '-background', '#ffffff', $path.'.jpg'], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+			fclose($pipes[0]); stream_get_contents($pipes[1]); fclose($pipes[1]);
+			$error = stream_get_contents($pipes[2]); fclose($pipes[2]);
+			if (proc_close($process) !== 0) { throw new RuntimeException($error); }
+			return $path.'.jpg';
+		}
+		$bytes = $GLOBALS['fixtures'][self::$failure === 'format' ? 'png' : 'jpg'];
+		file_put_contents($path.'.jpg', base64_decode($bytes)); return $path.'.jpg';
+	}
+	function cleanup() { self::$calls[] = ['cleanup']; }
+}
+class DownloadPDFOptions { function __construct(public array $values) {} }
+class DownloadPDFRenderer {
+	static public string $failure = '';
+	static public array $calls = [];
+	private string $html;
+	function __construct($options) { self::$calls[] = ['options', $options->values]; }
+	function setPaper($size, $orientation) { self::$calls[] = ['paper', $size, $orientation]; }
+	function loadHtml($html) { $this->html = $html; self::$calls[] = ['html', $html]; }
+	function render() { if (self::$failure === 'render') { throw new RuntimeException('Synthetic renderer failure'); } }
+	function output() {
+		if (self::$failure === 'bytes') { return '<html>Not a PDF</html>'; }
+		preg_match('~data:image/jpeg;base64,([^\"]+)~', $this->html, $match);
+		return "%PDF-1.4\n".base64_decode($match[1])."\n%%EOF\n";
+	}
+}
+if ($autoload = getenv('KCL_TEST_COMPOSER_AUTOLOAD')) { require $autoload; }
+else {
+	class_alias(DownloadPDFOptions::class, 'Dompdf\\Options');
+	class_alias(DownloadPDFRenderer::class, 'Dompdf\\Dompdf');
+}
+class Downloadlog { static public array $entries = []; function __construct() { throw new RuntimeException('Catalogue downloads must never create a database logger.'); } }
+class DownloadView {
+	public array $values = [];
+	function __construct(public ?DownloadRequest $request = null) {}
+	function getVar($key) { return $this->values[$key] ?? null; }
+	function setVar($key, $value) { $this->values[$key] = $value; }
+	function render($file) { return '<div>Native synthetic viewer</div>'; }
+}
+class DownloadResponse {
+	public int $status = 200;
+	public array $headers = [];
+	public string $content = '';
+	function setHTTPResponseCode($code, $message) { $this->status = $code; }
+	function addHeader($key, $value) { $this->headers[$key] = $value; }
+	function addContent($content) { $this->content .= $content; }
+}
+class BasePawtucketController {
+	public DownloadView $view;
+	public bool $rendered = false;
+	function __construct(public DownloadRequest $request, public DownloadResponse $response) { $this->view = new DownloadView(); }
+	function render($file, $direct) { checkDownload($file === 'Details/image_download_binary.php' && $direct, 'Wrong streaming view.'); $this->rendered = true; }
+}
+require dirname(__DIR__).'/controllers/ImageDownloadController.php';
+function resetDownload($format = 'tiff') {
+	$object = new DownloadModel('ca_objects', 42);
+	$rep = new DownloadModel('ca_object_representations', 101);
+	$mime = $format === 'jpg' ? 'image/jpeg' : 'image/'.$format;
+	$object->rows = [101 => ['mimetype' => $mime]];
+	$rep->info = ['MIMETYPE' => $mime]; $rep->path = $GLOBALS['directory'].'/image.'.$format;
+	$GLOBALS['models'] = ['ca_objects' => $object, 'ca_object_representations' => $rep];
+	$GLOBALS['requiresLogin'] = false; Media::$calls = []; Media::$failure = ''; Downloadlog::$entries = [];
+	return [$object, $rep, new DownloadRequest(['object_id' => 42, 'representation_id' => 101, 'format' => 'jpg'])];
+}
+function runDownload($request) {
+	$controller = new ImageDownloadController($request, new DownloadResponse()); $controller->Download(); return $controller;
+}
+foreach (['png', 'tiff', 'jpg', 'bmp'] as $format) {
+	[$object, $rep, $request] = resetDownload($format);
+	$originalHash = hash_file('sha256', $rep->path);
+	$html = tadlImageDownloadLinks($request, $object, 101);
+	checkDownload(str_contains($html, '<details') && str_contains($html, '<summary') && str_contains($html, 'JPG (to share)'), 'Native dropdown/JPG missing.');
+	checkDownload(str_contains($html, 'TIFF (to print)') === ($format === 'tiff'), 'TIFF offered without a TIFF original.');
+	checkDownload(str_contains($html, '>PDF</a>') && str_contains($html, 'format=pdf'), 'Image menu is missing PDF.');
+	checkDownload(substr_count($html, 'rel="nofollow"') === ($format === 'tiff' ? 3 : 2), 'Every generated image download format must discourage crawler following.');
+	$controller = runDownload($request);
+	$download = $controller->view->getVar('image_download');
+	checkDownload($controller->rendered && $download['mime'] === 'image/jpeg', 'JPG download failed.');
+	$dimensions = getimagesize($download['path']);
+	checkDownload($dimensions[0] === 13 && $dimensions[1] === 7 && $dimensions[2] === IMAGETYPE_JPEG, 'Download was resized or was not JPEG bytes.');
+	checkDownload(str_ends_with($controller->view->getVar('image_download_name'), '.jpg'), 'JPG filename missing.');
+	checkDownload(hash_file('sha256', $rep->path) === $originalHash, 'Original was changed.');
+	checkDownload(!Downloadlog::$entries, 'Successful download must stay database read-only.');
+	if ($format === 'jpg') { checkDownload(!Media::$calls, 'JPEG original should stream without re-encoding.'); }
+	else { checkDownload(Media::$calls[1] === ['read', $rep->path] && end(Media::$calls) === ['cleanup'], 'Conversion did not read/clean up native media.'); }
+}
+foreach (['png', 'tiff', 'jpg', 'bmp'] as $format) {
+	[$object, $rep, $request] = resetDownload($format); $request->params['format'] = 'pdf';
+	$originalHash = hash_file('sha256', $rep->path);
+	$controller = runDownload($request); $download = $controller->view->getVar('image_download');
+	if (!$controller->rendered && $autoload) { tadlPrepareImageDownload(['path' => $rep->path], 'pdf'); }
+	checkDownload($controller->rendered && $download['mime'] === 'application/pdf' && $download['temporary'], $format.': PDF download failed.');
+	$bytes = file_get_contents($download['path']);
+	checkDownload(str_starts_with($bytes, '%PDF-') && str_ends_with(rtrim($bytes), '%%EOF') && (new finfo(FILEINFO_MIME_TYPE))->file($download['path']) === 'application/pdf', 'PDF response has wrong bytes.');
+	checkDownload(str_ends_with($controller->view->getVar('image_download_name'), '.pdf') && !Downloadlog::$entries, 'PDF filename missing or download attempted a database write.');
+	checkDownload(hash_file('sha256', $rep->path) === $originalHash, 'PDF conversion modified the original.');
+	if (!$autoload) {
+		$options = DownloadPDFRenderer::$calls[count(DownloadPDFRenderer::$calls) - 3][1];
+		checkDownload(!$options['isRemoteEnabled'] && !$options['isPhpEnabled'] && !$options['isJavascriptEnabled'] && fileperms($options['tempDir']) % 512 === 0700, 'PDF renderer must use private scratch files and disable remote content/scripts.');
+		$paper = DownloadPDFRenderer::$calls[count(DownloadPDFRenderer::$calls) - 2];
+		checkDownload($paper === ['paper', 'letter', 'landscape'], 'Landscape image did not use landscape letter paper.');
+		$html = end(DownloadPDFRenderer::$calls)[1];
+		preg_match('~data:image/jpeg;base64,([^\"]+)~', $html, $match);
+		$dimensions = getimagesizefromstring(base64_decode($match[1]));
+		checkDownload($dimensions[0] === 13 && $dimensions[1] === 7, 'PDF lost full-resolution image pixels.');
+	} else {
+		checkDownload(preg_match_all('~/Type /Page\b~', $bytes) === 1, 'Image PDF must contain exactly one page.');
+		checkDownload(preg_match('~/Subtype /Image\s*/Width 13\s*/Height 7~', $bytes) === 1, 'Actual PDF did not retain full-resolution image pixels.');
+		checkDownload(preg_match('~/MediaBox \[0(?:\.\d+)? 0(?:\.\d+)? 792(?:\.\d+)? 612(?:\.\d+)?\]~', $bytes) === 1, 'Actual PDF used wrong paper size/orientation.');
+		if ($format === 'jpg') { checkDownload(str_contains($bytes, file_get_contents($rep->path)), 'PDF re-encoded the JPEG original.'); }
+	}
+}
+if ($autoload && ($magick = getenv('KCL_TEST_MAGICK'))) {
+	$process = proc_open([$magick, $directory.'/image.jpg', '-rotate', '90', $directory.'/portrait.jpg'], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+	fclose($pipes[0]); stream_get_contents($pipes[1]); fclose($pipes[1]);
+	$error = stream_get_contents($pipes[2]); fclose($pipes[2]);
+	checkDownload(proc_close($process) === 0, 'Portrait fixture could not be generated: '.$error);
+	$portrait = tadlPrepareImageDownload(['path' => $directory.'/portrait.jpg'], 'pdf');
+	$bytes = file_get_contents($portrait['path']);
+	checkDownload(preg_match('~/Subtype /Image\s*/Width 7\s*/Height 13~', $bytes) === 1, 'Portrait PDF resized the image.');
+	checkDownload(preg_match('~/MediaBox \[0(?:\.\d+)? 0(?:\.\d+)? 612(?:\.\d+)? 792(?:\.\d+)?\]~', $bytes) === 1 && preg_match_all('~/Type /Page\b~', $bytes) === 1, 'Portrait image did not fit on one portrait letter page.');
+}
+if (!$autoload) {
+	foreach (['render', 'bytes'] as $failure) {
+		[$object, $rep, $request] = resetDownload(); $request->params['format'] = 'pdf'; DownloadPDFRenderer::$failure = $failure;
+		$controller = runDownload($request);
+		checkDownload($controller->response->status === 503 && !$controller->rendered && !Downloadlog::$entries, 'PDF renderer failure was served/logged as a download.');
+	}
+	DownloadPDFRenderer::$failure = '';
+}
+[$object, $rep, $request] = resetDownload(); $request->params['format'] = 'tiff';
+$controller = runDownload($request); $download = $controller->view->getVar('image_download');
+checkDownload($controller->rendered && $download['path'] === $rep->path && $download['mime'] === 'image/tiff' && !Media::$calls, 'TIFF must stream the original unchanged.');
+foreach (['jpg', 'pdf'] as $requestedFormat) {
+foreach (['method', 'format', 'objectID', 'repID', 'load', 'objectAccess', 'objectACL', 'objectDeleted', 'repACL', 'objectFrontACL', 'repFrontACL', 'objectBundle', 'repBundle', 'repDeleted', 'unattached', 'bundle', 'policy', 'version', 'missing', 'queued', 'icon', 'nonimage', 'login'] as $case) {
+	[$object, $rep, $request] = resetDownload();
+	$request->params['format'] = $requestedFormat;
+	switch ($case) {
+		case 'method': $request->method = 'POST'; break;
+		case 'format': $request->params['format'] = 'original'; break;
+		case 'objectID': $request->params['object_id'] = -1; break;
+		case 'repID': $request->params['representation_id'] = 0; break;
+		case 'load': $object->loadable = false; break;
+		case 'objectAccess': $object->values['access'] = 0; break;
+		case 'objectACL': $object->readable = false; break;
+		case 'objectDeleted': $object->values['deleted'] = 1; break;
+		case 'objectFrontACL': $object->values += ['acl' => true, 'acl_level' => 0]; break;
+		case 'repFrontACL': $rep->values += ['acl' => true, 'acl_level' => 0]; break;
+		case 'objectBundle': $object->values['denied'] = ['ca_object_representations']; break;
+		case 'repBundle': $rep->values['denied'] = ['media']; break;
+		case 'repACL': $rep->readable = false; break;
+		case 'repDeleted': $rep->values['deleted'] = 1; break;
+		case 'unattached': unset($object->rows[101]); break;
+		case 'bundle': $object->rows = []; break;
+		case 'policy': $request->allowed = false; break;
+		case 'version': $request->versions = ['large']; break;
+		case 'missing': $rep->path .= '.missing'; break;
+		case 'queued': $rep->info['QUEUED'] = true; break;
+		case 'icon': $rep->info['USE_ICON'] = true; break;
+		case 'nonimage': $object->rows[101]['mimetype'] = 'video/mp4'; break;
+		case 'login': $GLOBALS['requiresLogin'] = true; break;
+	}
+	$controller = runDownload($request);
+	checkDownload($controller->response->status >= 400 && !$controller->rendered && !Media::$calls && !Downloadlog::$entries, $case.': rejected request reached conversion/download.');
+}
+}
+foreach (['jpg', 'pdf'] as $requestedFormat) {
+foreach (['read', 'write', 'dimensions', 'format'] as $failure) {
+	[$object, $rep, $request] = resetDownload(); Media::$failure = $failure;
+	$request->params['format'] = $requestedFormat;
+	$controller = runDownload($request);
+	checkDownload($controller->response->status === 503 && !$controller->rendered && !Downloadlog::$entries, $failure.': conversion failed open.');
+}
+}
+[$object, $rep, $request] = resetDownload('png'); $request->params['format'] = 'tiff';
+checkDownload(runDownload($request)->response->status === 503, 'PNG must not be renamed to TIFF.');
+[$object, $rep, $request] = resetDownload(); $rep->path = $directory.'/not-image';
+checkDownload(runDownload($request)->response->status === 503, 'Non-image bytes were accepted as JPEG.');
+[$object, $rep, $request] = resetDownload(); $object->values['acl'] = true; $object->values['access'] = 0;
+checkDownload(runDownload($request)->rendered, 'ACL-readable object should preserve native ACL access behavior.');
+[$object, $rep, $request] = resetDownload(); $rep->values['original_filename'] = "../bad\"\r\nX-Test: value.tif";
+$controller = runDownload($request);
+checkDownload(preg_match('/^[A-Za-z0-9_-]+\.jpg$/', $controller->view->getVar('image_download_name')) === 1, 'Unsafe attachment filename.');
+[$object, $rep, $request] = resetDownload();
+$toolbar = '<div class=\'detailMediaToolbar\'><a href="#" class="zoomButton" onclick="nativeZoom()" aria-label="Open Media View" title="Open Media View"><i class="fa fa-search-plus"></i></a><a class="setsButton" href="/Lightbox">Login to add to lightbox</a><a class="dlButton" href="/original">Download</a><a class="compare_link" href="/compare">Compare</a></div><!-- end detailMediaToolbar -->';
+$html = tadlImageToolbar($request, $object, 101, $toolbar);
+checkDownload(!str_contains($html, 'setsButton') && !str_contains($html, 'lightbox') && !str_contains($html, 'dlButton'), 'Old Lightbox/download buttons remain in toolbar.');
+checkDownload(str_contains($html, 'nativeZoom()') && str_contains($html, 'compare_link') && str_contains($html, 'Media viewer'), 'Native zoom/compare actions changed.');
+checkDownload(str_contains($html, 'aria-label="Media viewer"') && str_contains($html, 'title="Media viewer"'), 'Media viewer accessible name and tooltip must match its visible label.');
+checkDownload(substr_count($html, '<details') === 1 && str_contains($html, 'TIFF (to print)') && str_contains($html, 'JPG (to share)'), 'Toolbar must have one labeled dropdown.');
+foreach (['image/bmp', 'image/x-bmp', 'image/x-ms-bmp'] as $bmpMime) {
+	[$bmpObject, $bmpRep, $bmpRequest] = resetDownload('bmp');
+	$bmpObject->rows[101]['mimetype'] = $bmpMime;
+	$bmpRep->info['MIMETYPE'] = $bmpMime;
+	$bmpToolbar = tadlImageToolbar($bmpRequest, $bmpObject, 101, $toolbar);
+	checkDownload(str_contains($bmpToolbar, 'Media viewer') && str_contains($bmpToolbar, 'JPG (to share)') && str_contains($bmpToolbar, '>PDF</a>') && !str_contains($bmpToolbar, 'TIFF (to print)'), $bmpMime.': BMP originals must retain viewer/JPG/PDF controls.');
+}
+[$object, $rep, $request] = resetDownload();
+$object->rows[101]['mimetype'] = 'application/pdf';
+$pdfToolbar = tadlImageToolbar($request, $object, 101, $toolbar);
+checkDownload(str_contains($pdfToolbar, 'tadl-image-toolbar') && str_contains($pdfToolbar, 'Media viewer') && str_contains($pdfToolbar, 'nativeZoom()'), 'PDF actions must be visible and retain the native viewer.');
+checkDownload(str_contains($pdfToolbar, 'class="dlButton" href="/original"') && str_contains($pdfToolbar, 'Download PDF'), 'PDF must preserve its native complete-document download.');
+checkDownload(str_contains($pdfToolbar, 'class="dlButton" href="/original" rel="nofollow"'), 'Native PDF downloads must discourage crawler following.');
+checkDownload(!str_contains($pdfToolbar, 'setsButton') && !str_contains($pdfToolbar, '<details') && !str_contains($pdfToolbar, '/ImageDownload/'), 'PDF toolbar must not expose Lightbox or image conversions.');
+$namedPDFToolbar = tadlImageToolbar($request, $object, 101, '<div class="detailMediaToolbar"><a class="dlButton" href="/original" onclick="nativeDownload()" aria-label="Download" title="Download"><span role="graphics-document" aria-label="Download" title="Download"></span></a></div><!-- end detailMediaToolbar -->');
+$namedPDFDocument = new DOMDocument();
+$namedPDFDocument->loadHTML($namedPDFToolbar, LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_NONET);
+$namedPDFLink = $namedPDFDocument->getElementsByTagName('a')->item(0);
+checkDownload($namedPDFLink->getAttribute('aria-label') === 'Download PDF' && $namedPDFLink->getAttribute('title') === 'Download PDF', 'The PDF download accessible name must include its visible label.');
+checkDownload(trim($namedPDFLink->textContent) === 'Download PDF' && $namedPDFLink->getElementsByTagName('span')->item(0)->getAttribute('aria-hidden') === 'true', 'Native download icons must be decorative instead of supplying a shorter name.');
+checkDownload($namedPDFLink->getAttribute('href') === '/original' && $namedPDFLink->getAttribute('onclick') === 'nativeDownload()', 'PDF accessible naming must preserve native downloads and callbacks.');
+$restrictedPDFToolbar = tadlImageToolbar($request, $object, 101, str_replace('<a class="dlButton" href="/original">Download</a>', '', $toolbar));
+checkDownload(!str_contains($restrictedPDFToolbar, 'dlButton') && !str_contains($restrictedPDFToolbar, 'Download PDF') && str_contains($restrictedPDFToolbar, 'Media viewer'), 'PDF without native download permission must retain viewer but gain no download link.');
+$pdfSlide = '<div data-representation_id="101"><img src="/synthetic/pdf-preview.jpg">'.$toolbar.'</div>';
+checkDownload(str_contains(tadlImageViewerSlide($request, $object, 101, $pdfSlide), 'tadl-image-toolbar'), 'PDF preview slide did not normalize its toolbar for relocation.');
+[$object, $rep, $request] = resetDownload();
+$slide = '<div data-representation_id="101"><img src="/synthetic/still.jpg">'.$toolbar.'</div><script>nativeInitialization()</script>';
+$html = tadlImageViewerSlide($request, $object, 101, $slide);
+checkDownload(str_starts_with($html, '<div data-representation_id="101">') && str_contains($html, '<script>nativeInitialization()</script>') && substr_count($html, '<details') === 1, 'Slide wrappers/scripts were altered or dropdown duplicated.');
+$request->allowed = false;
+$html = tadlImageToolbar($request, $object, 101, $toolbar);
+checkDownload(!str_contains($html, '<details') && str_contains($html, 'nativeZoom()'), 'Download restrictions must preserve zoom.');
+$object->rows[101]['mimetype'] = 'video/mp4';
+$videoToolbar = tadlImageToolbar($request, $object, 101, $toolbar);
+checkDownload(!str_contains($videoToolbar, 'setsButton') && str_contains($videoToolbar, 'nativeZoom()') && str_contains($videoToolbar, 'dlButton') && str_contains($videoToolbar, 'compare_link'), 'Video must omit the duplicate/login Lightbox action and preserve its native media actions.');
+checkDownload(str_contains($videoToolbar, 'class="dlButton" href="/original" rel="nofollow"'), 'Native non-image downloads must discourage crawler following.');
+[$object, $rep, $request] = resetDownload();
+require dirname(__DIR__).'/helpers/object_detail_media.php';
+$view = new DownloadView($request);
+$view->values = ['representation_count' => 1, 'representation_ids' => [101], 't_subject' => $object, 'slide_list' => [$slide]];
+$renderBundle = function () { ob_start(); include dirname(__DIR__).'/views/bundles/representation_viewer_html.php'; return ob_get_clean(); };
+$html = $renderBundle->call($view);
+checkDownload(substr_count($html, '<details') === 1 && !str_contains($html, 'setsButton') && str_contains($html, 'JPG (to share)'), 'Actual single-image bundle did not replace its native toolbar.');
+$view->values['representation_count'] = 2;
+$view->values['slide_list'] = [$slide, $slide];
+$html = $renderBundle->call($view);
+checkDownload(str_contains($html, 'tadl-image-downloads') && !str_contains($html, 'setsButton') && str_contains($html, 'detailRepNavNext'), 'Multi-image bundle lost download controls or navigation.');
+foreach (['objects', 'gallery'] as $overlayContext) {
+	foreach (['id', 'object_id'] as $idParameter) {
+		$request->params = [$idParameter => 42, 'context' => $overlayContext];
+		$object->values['ca_objects.preferred_labels.name'] = 'Synthetic $1 <script>title</script> & "caption"';
+		$object->values['idno'] = 'SYNTHETIC.42 & "id"';
+		$view->values = ['viewer' => 'TileViewer', 'identifier' => 'representation:101', 'controls' => '<div class="objectInfo">Synthetic_filename.tiff</div><div class="repNav">Native navigation</div><div class="download"><form>Native download</form></div>'];
+		$renderOverlay = function () { ob_start(); include dirname(__DIR__).'/views/mediaViewers/viewerWrapper.php'; return ob_get_clean(); };
+		$html = $renderOverlay->call($view);
+		checkDownload(substr_count($html, '<details') === 1 && str_contains($html, 'TIFF (to print)') && !str_contains($html, 'Native download') && str_contains($html, 'Native navigation'), $overlayContext.'/'.$idParameter.': overlay dropdown or native navigation was lost.');
+		$document = new DOMDocument(); $document->loadHTML($html, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
+		$xpath = new DOMXPath($document);
+		$heading = $xpath->query('//div[@class="objectInfo"]')->item(0);
+		checkDownload($heading->textContent === $object->values['ca_objects.preferred_labels.name'].' ('.$object->values['idno'].')' && $heading->getAttribute('title') === $heading->textContent, 'Image viewer must show the current object title and identifier, with full hover text.');
+		checkDownload(!str_contains($html, 'Synthetic_filename.tiff') && $xpath->query('//div[@class="objectInfo"]//script')->length === 0 && str_contains($html, 'tadl-image-viewer-controls'), 'Image viewer heading was not escaped or retained the representation filename.');
+		checkDownload($xpath->query('//div[@id="caMediaOverlayContent"]//details[contains(@class,"tadl-viewer-downloads")]')->length === 1, 'Viewer download menu must accompany the selected native viewer.');
+		$summary = $xpath->query('//details/summary')->item(0);
+		checkDownload($summary->getAttribute('aria-label') === 'Download' && $summary->getAttribute('title') === 'Download' && trim($summary->textContent) === '', 'Viewer download must be an accessible icon control.');
+	}
+}
+
+$object->values['ca_objects.preferred_labels.name'] = 'A different synthetic object';
+$object->values['idno'] = '';
+$html = $renderOverlay->call($view);
+checkDownload(str_contains($html, 'A different synthetic object') && !str_contains($html, 'tadl-viewer-object-identifier') && !str_contains($html, 'Synthetic $1'), 'Fresh overlay title or missing-identifier handling is incorrect.');
+$object->values['ca_objects.preferred_labels.name'] = '';
+$html = $renderOverlay->call($view);
+checkDownload(str_contains($html, 'tadl-viewer-object-title">Object</span>'), 'Missing titles need a readable object fallback.');
+$object->readable = false;
+$html = $renderOverlay->call($view);
+checkDownload(!str_contains($html, 'tadl-viewer-object-title'), 'Unreadable object metadata must not populate the viewer heading.');
+$object->readable = true;
+$request->params['context'] = 'places';
+$html = $renderOverlay->call($view);
+checkDownload(str_contains($html, 'Synthetic_filename.tiff') && !str_contains($html, 'tadl-image-viewer-controls'), 'Non-object media headers must keep their native context.');
+
+foreach (['objects', 'gallery'] as $pdfContext) {
+	foreach (['id', 'object_id'] as $idParameter) {
+		[$object, $rep, $request] = resetDownload();
+		$request->params = [$idParameter => 42, 'context' => $pdfContext];
+		$object->values['ca_objects.preferred_labels.name'] = 'Synthetic PDF & <script>literal title</script>';
+		$object->values['idno'] = 'opaque-repository-identifier.pdf';
+		$view = new DownloadView($request);
+		$view->values = ['viewer' => 'pdfjs', 'identifier' => 'representation:101', 'controls' => '<div class="objectInfo">http_repository_opaque_filename.pdf</div><div class="download"><form id="nativePDFDownload" onclick="nativePDFDownload()">Native PDF download</form></div>'];
+		$html = $renderOverlay->call($view);
+		$document = new DOMDocument();
+		$document->loadHTML($html, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
+		$xpath = new DOMXPath($document);
+		$heading = $xpath->query('//div[@class="objectInfo"]')->item(0);
+		checkDownload($heading && $heading->textContent === $object->values['ca_objects.preferred_labels.name'] && $heading->getAttribute('title') === $heading->textContent, 'PDF viewer headings must use the selected readable object title.');
+		checkDownload($heading->getElementsByTagName('script')->length === 0 && !str_contains($html, 'http_repository_opaque_filename.pdf') && !str_contains($html, 'opaque-repository-identifier.pdf'), 'PDF headings must escape titles and omit imported filenames and identifier clutter.');
+		checkDownload($xpath->query('//div[@class="download"]/form[@id="nativePDFDownload"]')->length === 1 && str_contains($html, 'onclick="nativePDFDownload()"'), 'PDF viewers must preserve native PDF download controls and callbacks.');
+		checkDownload(!str_contains($html, 'tadl-viewer-downloads') && !str_contains($html, '/ImageDownload/'), 'PDF viewers must not receive image conversion menus.');
+		$object->values['denied'] = ['preferred_labels', 'idno'];
+		$html = $renderOverlay->call($view);
+		checkDownload(str_contains($html, 'tadl-viewer-object-title">Object</span>') && !str_contains($html, 'literal title'), 'A PDF title must retain native metadata-bundle permissions.');
+	}
+}
+
+// Gallery AJAX replaces the entire actual media partial. Its toolbar and global
+// navigation callback must follow the new item rather than retain the first IDs.
+$galleryItems = [
+	['item' => 21, 'object' => 42, 'representation' => 101, 'format' => 'tiff'],
+	['item' => 22, 'object' => 43, 'representation' => 202, 'format' => 'jpg'],
+	['item' => 23, 'object' => 44, 'representation' => 303, 'format' => 'png']
+];
+$galleryFixtures = [];
+foreach ($galleryItems as $position => $item) {
+	[$object, $rep, $request] = resetDownload($item['format']);
+	$object->id = $item['object']; $rep->id = $item['representation'];
+	$object->rows = [$rep->id => ['mimetype' => $rep->info['MIMETYPE']]];
+	$request->controller = 'Gallery';
+	$zoomUrl = caNavUrl($request, '', 'Detail', 'GetMediaOverlay', ['context' => 'gallery', 'id' => $object->id, 'representation_id' => $rep->id, 'set_id' => 301, 'overlay' => 1]);
+	$zoomCallback = 'caMediaPanel.showPanel('.json_encode($zoomUrl).', function() { var url = jQuery("#" + caMediaPanel.getPanelID()).data("reloadUrl"); if(url) { window.location = url; } }); return false;';
+	$galleryToolbar = '<div class="detailMediaToolbar"><a href="#" class="zoomButton" onclick="'.htmlspecialchars($zoomCallback, ENT_QUOTES, 'UTF-8').'"><i class="fa fa-search-plus"></i></a><a href="#" class="compare_link" data-id="representation:'.$rep->id.'">Compare</a><a href="#" class="setsButton">Lightbox</a><a href="#" class="dlButton">Download original</a></div><!-- end detailMediaToolbar -->';
+	$previous = $galleryItems[$position - 1] ?? []; $next = $galleryItems[$position + 1] ?? [];
+	$view = new DownloadView($request);
+	$view->values = [
+		'set_id' => 301, 'row_id' => $object->id, 'table' => 'ca_objects', 'representation_id' => $rep->id,
+		'previous_item_id' => $previous['item'] ?? 0, 'previous_row_id' => $previous['object'] ?? 0, 'previous_representation_id' => $previous['representation'] ?? 0,
+		'next_item_id' => $next['item'] ?? 0, 'next_row_id' => $next['object'] ?? 0, 'next_representation_id' => $next['representation'] ?? 0,
+		'rep' => '<img src="/synthetic/gallery-'.$rep->id.'.jpg" alt="Synthetic gallery image" width="1300" height="700">', 'repToolBar' => $galleryToolbar
+	];
+	$renderGallery = function () { ob_start(); include dirname(__DIR__).'/views/Gallery/set_item_rep_html.php'; return ob_get_clean(); };
+	$html = $renderGallery->call($view);
+	$document = new DOMDocument();
+	$document->loadHTML('<!doctype html><html><head><meta charset="UTF-8"></head><body>'.$html.'</body></html>', LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
+	$xpath = new DOMXPath($document);
+	$class = static function ($name) { return 'contains(concat(" ", normalize-space(@class), " "), " '.$name.' ")'; };
+	$toolbars = $xpath->query('//div['.$class('tadl-image-toolbar').']');
+	checkDownload($toolbars->length === 1, 'Gallery item '.$item['item'].' must render exactly one current image toolbar.');
+	$zoom = $xpath->query('//a['.$class('zoomButton').']');
+	checkDownload($zoom->length === 1 && $zoom->item(0)->getAttribute('onclick') === $zoomCallback && str_contains($zoom->item(0)->textContent, 'Media viewer'), 'Gallery lost or rebuilt the native media-view callback.');
+	$compare = $xpath->query('//a['.$class('compare_link').']');
+	checkDownload($compare->length === 1 && $compare->item(0)->getAttribute('data-id') === 'representation:'.$rep->id, 'Gallery compare action retained the previous representation.');
+	$menus = $xpath->query('//details['.$class('tadl-image-downloads').']');
+	checkDownload($menus->length === 1, 'Gallery download menu was missing or duplicated.');
+	$formats = [];
+	foreach ($xpath->query('.//a', $menus->item(0)) as $link) {
+		checkDownload(parse_url($link->getAttribute('href'), PHP_URL_PATH) === '/ImageDownload/Download', 'Gallery download stopped using the checked endpoint.');
+		parse_str((string)parse_url($link->getAttribute('href'), PHP_URL_QUERY), $params);
+		checkDownload(($params['object_id'] ?? '') === (string)$object->id && ($params['representation_id'] ?? '') === (string)$rep->id, 'Gallery download retained a different selected image.');
+		$formats[] = $params['format'] ?? '';
+	}
+	sort($formats);
+	checkDownload($formats === ($item['format'] === 'tiff' ? ['jpg', 'pdf', 'tiff'] : ['jpg', 'pdf']), 'Gallery download formats did not follow the selected original.');
+	checkDownload($xpath->query('//a['.$class('setsButton').' or '.$class('dlButton').']')->length === 0, 'Gallery retained replaced Lightbox/download actions.');
+	$previousArrow = $xpath->query('//button['.$class('galleryDetailPrevious').']');
+	$nextArrow = $xpath->query('//button['.$class('galleryDetailNext').']');
+	checkDownload($previousArrow->length === 1 && $nextArrow->length === 1, 'Gallery navigation controls disappeared.');
+	$galleryFixtures[] = [
+		'item' => $item, 'previous' => $previous, 'next' => $next, 'zoomUrl' => $zoomUrl,
+		'zoomCallback' => $zoom->item(0)->getAttribute('onclick'),
+		'previousCallback' => $previousArrow->item(0)->getAttribute('onclick'), 'nextCallback' => $nextArrow->item(0)->getAttribute('onclick'),
+		'scripts' => array_map(static function ($script) { return $script->textContent; }, iterator_to_array($xpath->query('//script')))
+	];
+}
+// Gallery may enlarge only its existing readable image representation, with a
+// native fallback for installations where the large derivative is unavailable.
+$galleryPreview = new class('ca_object_representations', 303) extends DownloadModel {
+	public array $versions = [];
+	public string $tag = '';
+	public array $requestedVersions = [];
+	function hasMediaVersion($field, $version) { return isset($this->versions[$version]); }
+	function getMediaInfo($field, $version, $key = null) {
+		if ($version === 'INPUT') { return parent::getMediaInfo($field, $version, $key); }
+		return $this->versions[$version] ?? null;
+	}
+	function getMediaTag($field, $version) { $this->requestedVersions[] = $version; return $this->tag; }
+};
+$largeImageInfo = ['MIMETYPE' => 'image/jpeg', 'FILENAME' => 'synthetic-large.jpg'];
+$largeImageTag = '<img src="/synthetic/large-gallery.jpg" width="1200" height="800" alt="Synthetic large gallery image">';
+$view->values['rep_object'] = $galleryPreview;
+foreach ([
+	'available' => ['large' => true],
+	'missing' => ['versions' => []],
+	'queued' => ['info' => ['QUEUED' => 1]],
+	'icon' => ['info' => ['USE_ICON' => 1]],
+	'skipped' => ['info' => ['SKIP' => 1]],
+	'non-image derivative' => ['info' => ['MIMETYPE' => 'video/mp4']],
+	'missing file' => ['info' => ['FILENAME' => '']],
+	'empty tag' => ['tag' => '', 'requested' => true],
+	'video' => ['mime' => 'video/mp4'],
+	'PDF' => ['mime' => 'application/pdf'],
+	'media permission denied' => ['denied' => ['media']],
+] as $scenario => $options) {
+	$galleryPreview->info = ['MIMETYPE' => $options['mime'] ?? 'image/tiff'];
+	$galleryPreview->values['denied'] = $options['denied'] ?? [];
+	$galleryPreview->versions = $options['versions'] ?? ['large' => array_replace($largeImageInfo, $options['info'] ?? [])];
+	$galleryPreview->tag = $options['tag'] ?? $largeImageTag;
+	$galleryPreview->requestedVersions = [];
+	$html = $renderGallery->call($view);
+	$expectLarge = $options['large'] ?? false;
+	checkDownload(str_contains($html, '/synthetic/large-gallery.jpg') === $expectLarge, $scenario.': gallery selected the wrong preview size.');
+	checkDownload($expectLarge || str_contains($html, '/synthetic/gallery-303.jpg'), $scenario.': native gallery fallback was lost.');
+	checkDownload($galleryPreview->requestedVersions === (($expectLarge || ($options['requested'] ?? false)) ? ['large'] : []), $scenario.': unavailable or denied large media was requested.');
+	checkDownload(str_contains($html, '/Detail/objects?object_id=44'), $scenario.': gallery image lost its object link.');
+}
+unset($view->values['rep_object']);
+checkDownload(str_contains($renderGallery->call($view), '/synthetic/gallery-303.jpg'), 'An absent native representation must keep the supplied preview.');
+$actionsScript = file_get_contents(dirname(__DIR__).'/views/Details/image_actions_script.php');
+$menusScript = file_get_contents(dirname(__DIR__).'/assets/pawtucket/js/image-downloads.js');
+preg_match('~<script>(.*?)</script>~s', $actionsScript, $scriptMatch);
+$js = <<<'JS'
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const input = JSON.parse(fs.readFileSync(0, 'utf8'));
+let current = null, visible = true, ready, clears = 0;
+const target = {
+ children: [],
+ contains(toolbar) { return this.children.includes(toolbar); },
+ replaceChildren() { this.children = []; clears++; },
+ appendChild(toolbar) { this.children.push(toolbar); current = null; }
+};
+const document = {
+ querySelector() { return visible ? { querySelectorAll() { return [...(current ? [current] : []), ...target.children]; } } : null; },
+ getElementById() { return target; }
+};
+const context = vm.createContext({document, jQuery: () => ({ready(callback) {ready = callback;}})});
+new vm.Script(input.actions).runInContext(context);
+const first = {representation:101}, second = {representation:102};
+current = first; ready();
+assert.equal(target.children[0], first); // Preserve the actual node and its callbacks.
+ready(); assert.equal(target.children[0], first); // Repeated ready callbacks keep controls.
+current = second; context.tadlPlaceImageToolbar(true);
+assert.deepEqual(target.children, [second]); // A new slide replaces stale download links.
+context.tadlPlaceImageToolbar(true);
+assert.equal(target.children.length, 0); // Switching to video removes image-only actions.
+current = first; context.tadlPlaceImageToolbar(true);
+assert.deepEqual(target.children, [first]);
+visible = false; context.tadlPlaceImageToolbar(true);
+assert.equal(target.children[0], first); // No object-detail page means no relocation.
+assert.equal(clears, 4);
+
+// Capture-phase handlers work even when the native canvas stops bubbling.
+const listeners = {};
+const focused = {};
+const menu = {open:true, contains(node) { return node === focused; }, querySelector() { return {focus() {menu.focused=true;}}; }};
+const tooltipCalls = [];
+let tooltipClick;
+const tooltipJQuery = element => ({
+ uitooltip(options) {tooltipCalls.push({element, options}); return this;},
+ on(event, callback) {assert.equal(event,'click');tooltipClick=callback;return this;}
+});
+tooltipJQuery.fn = {uitooltip() {}};
+const menusContext = vm.createContext({jQuery:tooltipJQuery,document:{
+ activeElement: focused,
+ addEventListener(type, callback, capture) { assert.equal(capture,true); listeners[type]=callback; },
+ querySelectorAll() { return menu.open ? [menu] : []; }
+}});
+new vm.Script(input.menus).runInContext(menusContext);
+listeners.click({target:focused}); assert.equal(menu.open,true);
+listeners.click({target:{}}); assert.equal(menu.open,false);
+menu.open=true;
+let prevented=false, stopped=false;
+listeners.keydown({key:'Escape',preventDefault(){prevented=true;},stopPropagation(){stopped=true;}});
+assert.equal(menu.open,false); assert.equal(menu.focused,true); assert.equal(prevented,true); assert.equal(stopped,true);
+prevented=stopped=false;
+listeners.keydown({key:'Escape',preventDefault(){prevented=true;},stopPropagation(){stopped=true;}});
+assert.equal(prevented,false); assert.equal(stopped,false); // Closed menus leave native Escape handling alone.
+listeners.keydown({key:'Tab',target:{closest(){return menu;}},stopPropagation(){stopped=true;}});
+assert.equal(stopped,false); // Tab remains native browser navigation; the viewer no longer binds it.
+const rotation = {};
+let placed=null;
+const column = {contains(node){return placed===node;},querySelector(){return rotation;},insertBefore(node,before){assert.equal(before,rotation);placed=node;},prepend(node){placed=node;}};
+const overlay = {querySelector(selector){return selector === '.tadl-viewer-downloads' ? menu : column;}};
+menusContext.tadlPlaceViewerDownload(overlay); assert.equal(placed,menu);
+assert.equal(tooltipCalls.length,1);
+assert.equal(typeof tooltipCalls[0].element.focus,'function');
+assert.equal(tooltipCalls[0].options.tooltipClass,'tileviewerTooltipFormat');
+assert.equal(tooltipCalls[0].options.hide,false);
+assert.equal(tooltipCalls[0].options.position.collision,'flipfit');
+tooltipClick.call(tooltipCalls[0].element);
+assert.equal(tooltipCalls[1].options,'close'); // The opened menu is not obscured by its tooltip.
+column.insertBefore=()=>assert.fail('Already placed menu moved twice');
+menusContext.tadlPlaceViewerDownload(overlay);
+assert.equal(tooltipCalls.length,2); // Repeated placement does not initialize another tooltip.
+column.querySelector=()=>null; placed=null;
+menusContext.tadlPlaceViewerDownload(overlay); assert.equal(placed,menu);
+menusContext.tadlPlaceViewerDownload(null);
+
+const loads = [], highlights = [], opened = [];
+const galleryContext = vm.createContext({
+ window: {},
+ document: {activeElement: null},
+ jQuery(selector) { return {
+  attr() { return this; },
+  is() { return false; },
+  load(url) { loads.push({selector, url}); return this; },
+  data(key) { assert.equal(selector, '#syntheticMediaPanel'); assert.equal(key, 'reloadUrl'); return '/Gallery/301?set_item_id=22'; }
+ }; },
+ tadlSelectGalleryItem(target) {
+  loads.push({selector:'#galleryDetailImageArea',url:target.representation}, {selector:'#galleryDetailObjectInfo',url:target.information}, {selector:'#caMediaPanelContentArea:visible',url:target.overlay});
+  highlights.push(target.thumbnail);
+ },
+ galleryHighlightThumbnail(id) { highlights.push(id); },
+ caMediaPanel: {showPanel(url, callback) { opened.push({url, callback}); }, getPanelID() { return 'syntheticMediaPanel'; }}
+});
+const invoke = callback => new vm.Script('(function(){' + callback + '})()').runInContext(galleryContext);
+for (const fixture of input.gallery) {
+ // jQuery.load executes the new partial's scripts, replacing caGalleryNav.
+ for (const script of fixture.scripts) new vm.Script(script).runInContext(galleryContext);
+ opened.length = 0;
+ invoke(fixture.zoomCallback);
+ assert.equal(opened.length, 1);
+ assert.equal(opened[0].url, fixture.zoomUrl);
+ opened[0].callback();
+ assert.equal(galleryContext.window.location, '/Gallery/301?set_item_id=22');
+ for (const direction of ['previous', 'next']) {
+  loads.length = 0; highlights.length = 0;
+  invoke(fixture[direction + 'Callback']);
+  const selected = fixture[direction];
+  if (!selected.item) {
+   assert.equal(loads.length, 0); assert.equal(highlights.length, 0); continue;
+  }
+  assert.equal(loads.length, 3);
+  assert.deepEqual(highlights, ['galleryIcon' + selected.item]);
+  const expected = [
+   {selector:'#galleryDetailImageArea', path:'/Gallery/getSetItemRep', params:{item_id:selected.item, set_id:301}},
+   {selector:'#galleryDetailObjectInfo', path:'/Gallery/getSetItemInfo', params:{item_id:selected.item, set_id:301}},
+   {selector:'#caMediaPanelContentArea:visible', path:'/Detail/GetMediaOverlay', params:{context:'gallery', id:selected.object, representation_id:selected.representation, set_id:301, overlay:1}}
+  ];
+  for (let i = 0; i < expected.length; i++) {
+   const url = new URL(loads[i].url, 'https://example.org');
+   assert.equal(loads[i].selector, expected[i].selector);
+   assert.equal(url.pathname, expected[i].path);
+   for (const [key, value] of Object.entries(expected[i].params)) assert.equal(url.searchParams.get(key), String(value));
+  }
+ }
+}
+JS;
+$process = proc_open([getenv('KCL_TEST_NODE') ?: 'node', '-e', $js], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+fwrite($pipes[0], json_encode(['actions' => $scriptMatch[1], 'menus' => $menusScript, 'gallery' => $galleryFixtures], JSON_THROW_ON_ERROR)); fclose($pipes[0]);
+$output = stream_get_contents($pipes[1]); fclose($pipes[1]);
+$errors = stream_get_contents($pipes[2]); fclose($pipes[2]);
+checkDownload(proc_close($process) === 0, 'Image action or gallery callback regression failed: '.$errors.$output);
+$cacheDirectory = sys_get_temp_dir().'/tadl-image-cache-test-'.bin2hex(random_bytes(8));
+register_shutdown_function(static function () use ($cacheDirectory) {
+ if (is_dir($cacheDirectory.'/public')) { rmdir($cacheDirectory.'/public'); }
+ foreach (glob($cacheDirectory.'/*') ?: [] as $file) { unlink($file); }
+ if (is_file($cacheDirectory.'/.pruned')) { unlink($cacheDirectory.'/.pruned'); }
+ if (is_dir($cacheDirectory)) { rmdir($cacheDirectory); }
+});
+[$object, $rep, $request] = resetDownload('bmp');
+$source = tadlImageDownloadSource($request, $object, 101);
+$source['info'] += ['WIDTH'=>13,'HEIGHT'=>7];
+$first = tadlCachedImageDownload($source, 'jpg', $cacheDirectory);
+checkDownload($first && !$first['temporary'] && (fileperms($first['path']) & 0077) === 0, 'Cached export must be reusable and private.');
+Media::$calls = [];
+$second = tadlCachedImageDownload($source, 'jpg', $cacheDirectory);
+checkDownload($second['path'] === $first['path'] && Media::$calls === [], 'A repeated JPG request must reuse the converted pixels.');
+$pdf = tadlCachedImageDownload($source, 'pdf', $cacheDirectory);
+Media::$calls = []; DownloadPDFRenderer::$calls = [];
+$secondPDF = tadlCachedImageDownload($source, 'pdf', $cacheDirectory);
+checkDownload($pdf && $secondPDF['path'] === $pdf['path'] && Media::$calls === [] && DownloadPDFRenderer::$calls === [], 'Repeated PDF requests must reuse the rendered document.');
+$source['checksum'] = 'synthetic-replaced-media';
+checkDownload(tadlCachedImageDownload($source, 'jpg', $cacheDirectory)['path'] !== $first['path'], 'Replacing native media must invalidate the export cache.');
+file_put_contents($first['path'], 'Synthetic damaged cache');
+$source['checksum'] = null;
+$rebuilt = tadlCachedImageDownload($source, 'jpg', $cacheDirectory);
+checkDownload($rebuilt && getimagesize($rebuilt['path'])[2] === IMAGETYPE_JPEG, 'Corrupt cache bytes must be rebuilt, never downloaded.');
+// Controller cache hits still reauthorize the object, attachment, media bundle and original download.
+$request->config = new DownloadConfig(['tadl_cache_image_downloads'=>true, 'tadl_image_download_cache_directory'=>$cacheDirectory]);
+Media::$calls = []; DownloadPDFRenderer::$calls = [];
+$controller = runDownload($request);
+checkDownload($controller->rendered && $controller->view->getVar('image_download')['path'] === $first['path'] && Media::$calls === [], 'The controller must use an authorized existing cache entry without conversion.');
+$object->values['acl'] = true; $object->values['acl_level'] = 0;
+$controller = runDownload($request);
+checkDownload($controller->response->status === 404 && !$controller->rendered && Media::$calls === [], 'Revoking front-only object ACLs must deny even a cached export.');
+$object->values['acl_level'] = 1; $rep->values['denied'] = ['media'];
+checkDownload(runDownload($request)->response->status === 404, 'A media bundle denial must prevent serving cached pixels.');
+$rep->values['denied'] = []; $request->versions = [];
+checkDownload(runDownload($request)->response->status === 404, 'Original-download permission must be rechecked on every cache hit.');
+$request->versions = ['original'];
+$lock = fopen(substr($first['path'], 0, -4).'.lock', 'c'); flock($lock, LOCK_EX);
+$started = microtime(true); Media::$calls = [];
+checkDownload(tadlCachedImageDownload($source, 'jpg', $cacheDirectory) === null && microtime(true)-$started < 4 && Media::$calls === [], 'A competing conversion must stop waiting within three seconds without duplicate work.');
+flock($lock, LOCK_UN); fclose($lock);
+$linkDirectory = $cacheDirectory.'-link'; symlink($cacheDirectory, $linkDirectory);
+checkDownload(tadlCachedImageDownload($source, 'jpg', $linkDirectory) === null, 'A symlinked cache directory must be refused.'); unlink($linkDirectory);
+// Cache selection follows authorization, even for a ready-to-serve export.
+$object->values['acl_level'] = 0;
+Media::$calls = []; $request->config = new DownloadConfig();
+checkDownload(tadlImageDownloadSource($request, $object, 101) === null, 'A cached file must not make a denied source readable.');
+$object->values['acl_level'] = 1;
+touch($first['path'], time()-700000); clearstatcache(true, $first['path']);
+touch($cacheDirectory.'/.pruned', time()-3601); clearstatcache(true, $cacheDirectory.'/.pruned');
+tadlPruneImageDownloads($cacheDirectory);
+checkDownload(!is_file($first['path']) && is_file($pdf['path']), 'Expiry must remove only unused cached exports.');
+mkdir($cacheDirectory.'/public', 0755); chmod($cacheDirectory.'/public', 0755);
+checkDownload(tadlCachedImageDownload($source, 'jpg', $cacheDirectory.'/public') === null, 'Publicly accessible/shared filesystem permissions must be rejected.');
+$diagnostics = file_get_contents($directory.'/diagnostics.log');
+checkDownload(str_contains($diagnostics, '"event":"tadl_export_failed"') && str_contains($diagnostics, '"operation":"image"') && str_contains($diagnostics, '"representation_id":'), 'Actual failed image requests must record safe operator diagnostics.');
+checkDownload(!str_contains($diagnostics, 'Synthetic renderer failure') && !str_contains($diagnostics, $directory), 'Diagnostics must not log exception messages or full source paths.');
+echo json_encode(['status' => 'passed', 'assertions' => $assertions, 'boundaries' => 'actual helper/controller/action script/gallery media partial; synthetic access/ACL/media/DOM APIs; Node.js gallery callbacks; real image bytes; '.($autoload ? 'real bundled Dompdf' : 'synthetic PDF renderer')], JSON_PRETTY_PRINT).PHP_EOL;

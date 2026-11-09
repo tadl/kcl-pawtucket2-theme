@@ -34,7 +34,7 @@ function assetCheck(bool $condition, string $message): void {
 }
 $app = assetFixtureConfig([$theme.'/conf/app.conf']);
 $assets = assetFixtureConfig([$core.'/app/conf/assets.conf', $core.'/themes/default/conf/assets.conf', $theme.'/conf/assets.conf']);
-assetCheck(!(bool)$app->get('allowThemeInheritance'), 'KCL must retain its own config with native inheritance disabled.');
+assetCheck(!(bool)$app->get('allowThemeInheritance') && !$app->get('inheritFrom'), 'KCL must retain its own config without an external theme.');
 MemoryCache::save(__CA_APP_CONFIG__, $app, 'ConfigurationInstances');
 MemoryCache::save('assets.conf', $assets, 'ConfigurationInstances');
 $g_asset_config = $assets;
@@ -58,15 +58,19 @@ $request = new class($core, $theme) {
 	public function getDefaultThemeDirectoryPath(): string { return $this->core.'/themes/default'; }
 };
 $html = tadlAssetLoadHTML($request);
-foreach (['tadl-theme.css', 'accessibility.css'] as $file) {
-	assetCheck(is_link($theme.'/assets/pawtucket/css/'.$file) && is_file($theme.'/assets/pawtucket/css/'.$file), 'Parent CSS link must resolve.');
-	assetCheck(str_contains($html, '/themes/kcl/assets/pawtucket/css/'.$file), 'Native loader must include linked parent styles.');
+foreach (['main.css', 'fonts.css', 'base.css', 'accessibility.css'] as $file) {
+	assetCheck(!is_link($theme.'/assets/pawtucket/css/'.$file) && is_file($theme.'/assets/pawtucket/css/'.$file), 'KCL CSS must be a regular local file.');
+	assetCheck(str_contains($html, '/themes/kcl/assets/pawtucket/css/'.$file), 'Native loader must include local KCL styles.');
 }
 foreach (['user-features', 'display-preferences', 'thumbnail-focus', 'image-downloads', 'document-text'] as $file) {
-	assetCheck(is_file($theme.'/assets/pawtucket/js/'.$file.'.js'), 'Inherited runtime script must resolve.');
-	assetCheck(str_contains($html, '/themes/kcl/assets/pawtucket/js/'.$file.'.js'), 'Native loader must include inherited runtime script.');
+	assetCheck(!is_link($theme.'/assets/pawtucket/js') && is_file($theme.'/assets/pawtucket/js/'.$file.'.js'), 'Runtime scripts must be local files.');
+	assetCheck(str_contains($html, '/themes/kcl/assets/pawtucket/js/'.$file.'.js'), 'Native loader must include local runtime scripts.');
 }
-assetCheck(strpos($html, 'tadl-theme.css') < strpos($html, 'accessibility.css') && strpos($html, 'accessibility.css') < strpos($html, 'css/theme.css?'), 'KCL branding must follow parent and accessibility styles.');
+foreach (['Regular', 'Bold', 'Italic', 'BoldItalic', 'Light', 'LightItalic'] as $face) {
+	assetCheck(is_file($theme.'/assets/pawtucket/css/Lato/Lato-'.$face.'.woff2'), 'Bundled Lato faces must resolve locally.');
+}
+assetCheck(!str_contains($html, '/themes/tadl/') && !str_contains($html, '/themes/default/assets/pawtucket/'), 'Theme packages must resolve to KCL without another theme.');
+assetCheck(strpos($html, 'base.css') < strpos($html, 'accessibility.css') && strpos($html, 'accessibility.css') < strpos($html, 'css/theme.css?'), 'KCL branding must follow its base and accessibility styles.');
 assetCheck(str_contains($html, 'css/theme.css?rev=synthetic&amp;v='.substr(hash_file('sha256', $theme.'/assets/pawtucket/css/theme.css'), 0, 16)), 'KCL stylesheet must receive its content hash while preserving the native suffix.');
 assetCheck(!str_contains($html, 'recent-writing.js') && !str_contains($html, 'fonts.googleapis.com'), 'KCL must not load the unrelated writing feed or external fonts.');
-fwrite(STDOUT, "Assets passed: native loader, parent links, runtime scripts, KCL override order and own content hash.\n");
+fwrite(STDOUT, "Assets passed: native loader, local CSS/fonts/scripts, override order and content hashes.\n");

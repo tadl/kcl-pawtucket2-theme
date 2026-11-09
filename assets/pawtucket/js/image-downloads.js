@@ -1,0 +1,40 @@
+// Delegate dismissal so menus loaded by gallery/viewer AJAX behave the same way.
+document.addEventListener('click', function (event) {
+    document.querySelectorAll('details.tadl-image-downloads[open]').forEach(function (menu) {
+        if (!menu.contains(event.target)) { menu.open = false; }
+    });
+}, true);
+
+document.addEventListener('keydown', function (event) {
+    if (event.key !== 'Escape') { return; }
+    const menus = document.querySelectorAll('details.tadl-image-downloads[open]');
+    if (!menus.length) { return; }
+    menus.forEach(function (menu) {
+        if (menu.contains(document.activeElement)) { menu.querySelector('summary').focus(); }
+        menu.open = false;
+    });
+    // Close the menu first, without also closing the media viewer behind it.
+    event.preventDefault();
+    event.stopPropagation();
+}, true);
+
+function tadlPlaceViewerDownload(overlay) {
+    if (!overlay) { return; }
+    const menu = overlay.querySelector('.tadl-viewer-downloads');
+    const column = overlay.querySelector('.tileviewerToolbarCol');
+    if (!menu || !column || column.contains(menu)) { return; }
+    const rotation = column.querySelector('[id$="ControlRotation"]');
+    if (rotation) { column.insertBefore(menu, rotation); }
+    else { column.prepend(menu); }
+    // This control is inserted after TileViewer initializes its native tooltips.
+    if (typeof jQuery !== 'undefined' && jQuery.fn.uitooltip) {
+        jQuery(menu.querySelector('summary')).uitooltip({
+            tooltipClass: 'tileviewerTooltipFormat',
+            hide: false,
+            position: {my: 'right top+5', at: 'left top', collision: 'flipfit'}
+        }).on('click', function () {
+            // The tooltip sits beside this icon, where the download menu opens.
+            jQuery(this).uitooltip('close');
+        });
+    }
+}

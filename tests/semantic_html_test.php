@@ -55,8 +55,11 @@ class SemanticView {
 	}
 	public function getVar($key) { return ['item'=>$this->object, 'representation_id'=>101, 'representationViewerPrimaryOnly'=>false][$key] ?? null; }
 	public function render(string $path): string {
-		$file = dirname(__DIR__).'/views/'.$path;
-		if (!is_file($file)) { $file = dirname(__DIR__, 2).'/tadl/views/'.$path; }
+		$views = realpath(dirname(__DIR__).'/views');
+		$file = realpath($views.'/'.$path);
+		if (!$file || !is_file($file) || !str_starts_with($file, $views.'/')) {
+			throw new RuntimeException('A semantic fixture view must resolve inside KCL.');
+		}
 		ob_start(); include $file; return ob_get_clean();
 	}
 	public function page(string $path): string {
@@ -87,13 +90,13 @@ foreach ([['Front', 'Front/front_page_html.php'], ['About', 'About/Index.php'], 
 	}
 	if ($controller === 'Detail') {
 		semanticCheck(!str_contains($html, 'From the newspaper archive'), 'Issue metadata must not repeat the removed eyebrow.');
-		semanticCheck(($GLOBALS['semantic_navigation'] ?? null) === ['objects', 'Browse newspapers'], 'Issue navigation must reuse the parent context-aware helper.');
+		semanticCheck(($GLOBALS['semantic_navigation'] ?? null) === ['objects', 'Browse newspapers'], 'Issue navigation must reuse the local context-aware helper.');
 		semanticCheck(($GLOBALS['semantic_document_object'] ?? null) === $view->object, 'Document text must use the same access-checked issue.');
 		semanticCheck($xpath->query('//article//header/h1')->length === 1 && $xpath->query('//dl/div/dt')->length === 2, 'The issue title/date/identifier semantics must remain available.');
 		semanticCheck($xpath->query('//article/div[@class="kcl-issue-layout"]/div[contains(@class,"kcl-issue-media")]/div[@class="kcl-issue-viewer"]')->length === 1, 'The native preview must remain in the left media column.');
 		semanticCheck($xpath->query('//article/div/div[contains(@class,"kcl-issue-info")]//nav[@class="tadl-record-nav"]')->length === 1, 'Context-aware navigation must be in the right metadata column.');
 		semanticCheck($xpath->query('//article/div/div[contains(@class,"kcl-issue-info")]//*[@id="tadlObjectMediaActions" and @role="group" and @aria-label="Issue media actions"]')->length === 1, 'Native media controls need their right-column destination.');
-		semanticCheck(str_contains($html, 'function tadlPlaceImageToolbar(reset = false)'), 'The established parent toolbar adapter must be rendered unchanged.');
+		semanticCheck(str_contains($html, 'function tadlPlaceImageToolbar(reset = false)'), 'The established local toolbar adapter must be rendered unchanged.');
 		$summary = $xpath->query('//article/details[@class="tadl-document-text"]/summary')->item(0);
 		semanticCheck($summary && $summary->textContent === 'Document text', 'A native keyboard-accessible OCR disclosure must follow issue information.');
 		foreach ([101, 102] as $index => $representation) {
@@ -103,4 +106,4 @@ foreach ([['Front', 'Front/front_page_html.php'], ['About', 'About/Index.php'], 
 		}
 	}
 }
-echo "Semantic HTML passed: banner/main/search labels, heading structure, parent navigation, named native thumbnails and OCR disclosure.\n";
+echo "Semantic HTML passed: banner/main/search labels, heading structure, local navigation, named native thumbnails and OCR disclosure.\n";

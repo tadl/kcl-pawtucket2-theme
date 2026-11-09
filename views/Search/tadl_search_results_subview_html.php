@@ -1,0 +1,132 @@
+<?php
+	require_once(__DIR__.'/../../helpers/thumbnail_focus.php');
+	require_once(__DIR__.'/../../helpers/object_thumbnails.php');
+	require_once(__DIR__.'/../../helpers/representation_formats.php');
+	$qr_results = $this->getVar('result');
+	tadlFilterMediaResult($this->request, $qr_results, (string)$this->getVar('block'));
+	if (!$qr_results || !($vn_result_count = (int)$qr_results->numHits())) { return; }
+
+	$va_block_info = $this->getVar('blockInfo');
+	$vs_block = (string)$this->getVar('block');
+	$vs_table = $va_block_info['table'];
+	$vs_search = (string)$this->getVar('search');
+	$va_access_values = caGetUserAccessValues($this->request);
+	$vn_preview_limit = min(6, max(1, (int)$this->getVar('itemsPerPage')));
+	$vs_label_field = ($vs_table === 'ca_entities') ? 'displayname' : 'name';
+	$va_preview_items = array();
+
+	// Each overview starts with a bounded preview, independent of former carousel state.
+	$qr_results->seek(0);
+	while ((sizeof($va_preview_items) < $vn_preview_limit) && $qr_results->nextHit()) {
+		$vn_id = (int)$qr_results->getPrimaryKey();
+		$vs_label = trim((string)$qr_results->get("{$vs_table}.preferred_labels.{$vs_label_field}"));
+		$va_preview_items[] = array(
+			'id' => $vn_id,
+			'label' => $vs_label ? $vs_label : _t('Untitled'),
+			'url' => caDetailUrl($this->request, $vs_table, $vn_id),
+			'image' => ''
+		);
+	}
+
+	$va_formats = [];
+	if ($vs_table === 'ca_objects') {
+		$va_formats = tadlObjectRepresentationFormats($this->request, array_column($va_preview_items, 'id'), $va_access_values);
+		$t_object = new ca_objects();
+		$va_object_media = $t_object->getPrimaryMediaForIDs(array_column($va_preview_items, 'id'), array('medium'), array('checkAccess' => $va_access_values));
+		foreach ($va_preview_items as &$va_item) {
+			$vs_primary_tag = '';
+			if ($vs_image_url = $va_object_media[$va_item['id']]['urls']['medium'] ?? '') {
+				$vs_primary_tag = '<img src="'.htmlspecialchars($vs_image_url, ENT_QUOTES, 'UTF-8').'" alt="" loading="lazy">';
+			}
+			$va_item['image'] = tadlFocusThumbnail(tadlObjectThumbnail($va_item['id'], 'medium', $va_access_values, $vs_primary_tag, $this->request));
+		}
+		unset($va_item);
+	} elseif ($vs_table === 'ca_collections') {
+		$va_collection_ids = array_column($va_preview_items, 'id');
+		$va_options = caGetOption('options', $va_block_info, array());
+		require_once(__DIR__.'/../Browse/collection_thumbnail_helpers.php');
+		$va_images = tadlGetCollectionImages($va_collection_ids, array(
+			'request' => $this->request, 'version' => 'small',
+			'relationshipTypes' => caGetOption('selectMediaUsingRelationshipTypes', $va_options, null),
+			'objectTypes' => caGetOption('selectMediaUsingTypes', $va_options, null),
+			'checkAccess' => $va_access_values
+		));
+		foreach ($va_preview_items as &$va_item) {
+			$va_item['image'] = tadlFocusThumbnail(($va_images[$va_item['id']] ?? ''));
+		}
+		unset($va_item);
+	}
+
+	$va_full_results_params = array(
+		'search' => $vs_search,
+		'source' => 'multisearch',
+		'clear' => 1,
+		'_advanced' => 0
+	);
+	if ($vs_table === 'ca_objects') {
+		// Match a new advanced keyword search, regardless of saved result sorts.
+		$va_full_results_params += ['sort' => 'Relevance', 'direction' => 'asc'];
+	}
+	$vs_full_results_url = caNavUrl($this->request, '', 'Search', $vs_block, $va_full_results_params, array('useQueryString' => true));
+	$vs_display_name = (string)$va_block_info['displayName'];
+	$vb_media_cards = in_array($vs_table, array('ca_objects', 'ca_collections'), true);
+	$vs_list_class = ($vs_table === 'ca_collections') ? 'tadl-search-collection-grid' : ($vb_media_cards ? 'tadl-search-grid' : 'tadl-search-list');
+?>
+<div class="tadl-search-section-header">
+	<div>
+		<h2 id="<?php print htmlspecialchars($vs_block.'-heading', ENT_QUOTES, 'UTF-8'); ?>"><?php print htmlspecialchars($vs_display_name, ENT_QUOTES, 'UTF-8').' ('.$vn_result_count.')'; ?></h2>
+<?php
+	if ($vn_result_count > sizeof($va_preview_items)) {
+?>
+		<small class="tadl-search-preview-count"><?php print htmlspecialchars(_t('Showing %1 of %2', sizeof($va_preview_items), $vn_result_count), ENT_QUOTES, 'UTF-8'); ?></small>
+<?php
+	}
+?>
+	</div>
+	<a class="tadl-search-view-all" href="<?php print htmlspecialchars($vs_full_results_url, ENT_QUOTES, 'UTF-8'); ?>"><?php print htmlspecialchars(_t('View all %1', $vs_display_name), ENT_QUOTES, 'UTF-8'); ?> <span aria-hidden="true">&rarr;</span></a>
+</div>
+<ul class="<?php print $vs_list_class; ?>">
+<?php
+	foreach ($va_preview_items as $va_item) {
+		$vs_item_url = htmlspecialchars($va_item['url'], ENT_QUOTES, 'UTF-8');
+		$vs_item_label = htmlspecialchars($va_item['label'], ENT_QUOTES, 'UTF-8');
+		$format_description_id = !empty($va_formats[$va_item['id']]) ? $vs_block.'-formats-'.(int)$va_item['id'] : null;
+?>
+	<li>
+<?php
+		if ($vb_media_cards) {
+?>
+        <?php $object_card = $vs_table === 'ca_objects'; ?>
+        <?php if ($object_card): ?><div class="tadl-search-card"><?php else: ?><a class="tadl-search-card tadl-search-card--collection" href="<?= $vs_item_url; ?>"><?php endif; ?>
+			<?php if ($object_card): ?><a class="tadl-search-card-media" href="<?= $vs_item_url; ?>" aria-label="<?= $vs_item_label; ?>"><?php else: ?><span class="tadl-search-card-media" aria-hidden="true"><?php endif; ?>
+<?php
+			if ($va_item['image']) {
+				print $va_item['image'];
+			} else {
+?>
+				<span class="tadl-search-card-placeholder" aria-hidden="true"><i class="fa <?php print ($vs_table === 'ca_collections') ? 'fa-folder' : 'fa-image'; ?>"></i></span>
+<?php
+			}
+?>
+			<?php if ($object_card): ?></a><?php else: ?></span><?php endif; ?>
+			<?php if ($vs_table === 'ca_objects'): ?>
+			<div class="tadl-search-card-caption<?= !empty($va_formats[$va_item['id']]) ? ' tadl-result-with-formats' : ''; ?>">
+				<a class="tadl-search-card-title" href="<?= $vs_item_url; ?>"><?= $vs_item_label; ?></a>
+				<?= tadlRepresentationFormatTags($va_formats[$va_item['id']] ?? [], $format_description_id); ?>
+			</div>
+			<?php else: ?>
+			<span class="tadl-search-card-title"><?= $vs_item_label; ?></span>
+			<?php endif; ?>
+		<?php if ($object_card): ?></div><?php else: ?></a><?php endif; ?>
+<?php
+		} else {
+?>
+		<a href="<?php print $vs_item_url; ?>"><?php print $vs_item_label; ?></a>
+<?php
+		}
+?>
+	</li>
+<?php
+	}
+?>
+</ul>

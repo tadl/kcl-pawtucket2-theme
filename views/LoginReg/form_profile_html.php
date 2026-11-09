@@ -1,0 +1,135 @@
+<?php
+/* ----------------------------------------------------------------------
+ * themes/default/views/LoginReg/form_profile_html.php
+ * ----------------------------------------------------------------------
+ * CollectiveAccess
+ * Open-source collections management software
+ * ----------------------------------------------------------------------
+ *
+ * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
+ * Copyright 2013-2022 Whirl-i-Gig
+ *
+ * For more information visit http://www.CollectiveAccess.org
+ *
+ * This program is free software; you may redistribute it and/or modify it under
+ * the terms of the provided license as published by Whirl-i-Gig
+ *
+ * CollectiveAccess is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTIES whatsoever, including any implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * This source code is free and modifiable under the terms of
+ * GNU General Public License. (http://www.gnu.org/copyleft/gpl.html). See
+ * the "license.txt" file for details, or visit the CollectiveAccess web site at
+ * http://www.CollectiveAccess.org
+ *
+ * ----------------------------------------------------------------------
+ */
+
+	require_once(__DIR__.'/../../helpers/form_accessibility.php');
+	$va_errors = (array)$this->getVar("errors");
+	$t_user = $this->getVar("t_user");
+	if($this->request->isAjax()){
+?>
+<div id="caFormOverlay"><button type="button" class="pull-right tadl-dialog-close" aria-label="<?= _t('Close dialog'); ?>" onclick="caMediaPanel.hidePanel(); return false;"><span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span></button>
+<?php
+	}
+?>
+<script type="text/javascript">
+	// initialize CA Utils
+	caUI.initUtils();
+</script>
+<div class="row"><div class="col-sm-4"><H1<?php print (!$this->request->isAjax()) ? ' class="text-right"' : ''; ?>><?php print _t("User information"); ?></H1></div></div>
+
+<?php
+	if(!empty($va_errors["general"])){
+		print "<div class='alert alert-danger' role='alert'>".htmlspecialchars($va_errors["general"], ENT_QUOTES, "UTF-8")."</div>";
+	}
+?>
+	<form id="ProfileForm" action="<?php print caNavUrl($this->request, "", "AccountProfile", "profileSave"); ?>" class="form-horizontal" method="POST">
+        <input type="hidden" name="csrfToken" value="<?php print htmlspecialchars(caGenerateCSRFToken($this->request), ENT_QUOTES, "UTF-8"); ?>"/>
+<?php
+		foreach(array("fname", "lname", "email") as $vs_field){
+			if(!empty($va_errors[$vs_field])){
+				print "<div class='alert alert-danger' role='alert'>".htmlspecialchars($va_errors[$vs_field], ENT_QUOTES, "UTF-8")."</div>";
+			}
+			print tadlAccessibleAccountControl($t_user->htmlFormElement($vs_field,"<div class='form-group".((!empty($va_errors[$vs_field])) ? " has-error" : "")."'><label for='".$vs_field."' class='col-sm-4 control-label'>^LABEL</label><div class='col-sm-7'>^ELEMENT</div><!-- end col-sm-7 --></div><!-- end form-group -->\n", array("classname" => "form-control")), $vs_field, $va_errors[$vs_field] ?? null);
+		}
+		$va_profile_settings = $this->getVar("profile_settings");
+		if(is_array($va_profile_settings) and sizeof($va_profile_settings)){
+			foreach($va_profile_settings as $vs_field => $va_profile_element){
+				if(!empty($va_errors[$vs_field])){
+					print "<div class='alert alert-danger' role='alert'>".htmlspecialchars($va_errors[$vs_field], ENT_QUOTES, "UTF-8")."</div>";
+				}
+				print "<div class='form-group".((!empty($va_errors[$vs_field])) ? " has-error" : "")."'>";
+				print $va_profile_element["bs_formatted_element"];
+				print "</div><!-- end form-group -->";
+			}
+		}
+		if(!empty($va_errors["password"])){
+			print "<div class='alert alert-danger' role='alert'>".htmlspecialchars($va_errors["password"], ENT_QUOTES, "UTF-8")."</div>";
+		}
+?>
+		<div class="form-group<?php print ((!empty($va_errors["password"])) ? " has-error" : ""); ?>">
+			<label for='password' class='col-sm-4 control-label'><?php print _t('Reset Password'); ?></label>
+			<div class="col-sm-7"><p class="help-block"><?php print _t("Only enter if you would like to change your current password"); ?></p><input type="password" name="password" id="password" size="40" class="form-control" autocomplete="new-password" /></div><!-- end col-sm-7 -->
+		</div><!-- end form-group -->
+		<div class="form-group<?php print ((!empty($va_errors["password"])) ? " has-error" : ""); ?>">
+			<label for='password2' class='col-sm-4 control-label'><?php print _t('Re-Type password'); ?></label>
+			<div class="col-sm-7"><input type="password" name="password2" id="password2" size="40" class="form-control" autocomplete="new-password" /></div><!-- end col-sm-7 -->
+		</div><!-- end form-group -->
+
+<?php
+	if (!empty($va_errors["group_code"])) {
+		print "<div class='alert alert-danger' role='alert'>".htmlspecialchars($va_errors["group_code"], ENT_QUOTES, "UTF-8")."</div>";
+	}
+?>
+	<div class="row"><div class="col-sm-4"><H2<?php print (!$this->request->isAjax()) ? ' class="text-right"' : ''; ?>><?php print _t("Groups"); ?></H2></div></div>
+		<div class="form-group<?php print ((!empty($va_errors["group_code"])) ? " has-error" : ""); ?>">
+			<label for='group_code' class='col-sm-4 control-label'><?php print _t('Join group'); ?></label>
+			<div class="col-sm-7"><p class="help-block"><?php print _t("If you have been provided with a group code enter it here to join the group."); ?></p><input type="text" name="group_code" id="group_code" size="40" class="form-control"  autocomplete="off" /></div><!-- end col-sm-7 -->
+		</div><!-- end form-group -->
+<?php
+	if (is_array($groups = $t_user->getUserGroups()) && (sizeof($groups) > 0)) {
+?>
+		<div class="form-group">
+			<label class='col-sm-4 control-label'><?php print _t('Group memberships'); ?></label>
+			<div class="col-sm-7">
+
+				<ul style="list-style: none; padding: 3px;">
+<?php
+					foreach($groups as $group) {
+						print "<li><label>".htmlspecialchars($group['name'], ENT_QUOTES, 'UTF-8')."</label> <blockquote class='help-block'>".htmlspecialchars($group['description'], ENT_QUOTES, 'UTF-8')."</blockquote></li>";
+					}
+?>
+				</ul>
+			</div><!-- end col-sm-7 -->
+		</div><!-- end form-group -->
+<?php
+	}
+?>
+		<div class="form-group">
+			<div class="col-sm-offset-4 col-sm-7">
+				<button type="submit" class="btn btn-default"><?php print _t('Save'); ?></button>
+			</div><!-- end col-sm-7 -->
+		</div><!-- end form-group -->
+	</form>
+<?php
+	if($this->request->isAjax()){
+?>
+</div><!-- end caFormOverlay -->
+<script type='text/javascript'>
+	jQuery(document).ready(function() {
+		jQuery('#ProfileForm').on('submit', function(e){
+			jQuery('#caMediaPanelContentArea').load(
+				<?php print json_encode(caNavUrl($this->request, '', 'AccountProfile', 'profileSave'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>,
+				jQuery('#ProfileForm').serialize()
+			);
+			e.preventDefault();
+			return false;
+		});
+	});
+</script>
+<?php
+	}
+?>

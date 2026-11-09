@@ -41,8 +41,8 @@ checkKclConfig($configs['search.conf']->getAssoc('advancedSearchTypes') === [], 
 checkKclConfig(array_keys($configs['detail.conf']->getAssoc('detailTypes')) === ['objects'], 'Default unrelated detail types were retained.');
 checkKclConfig((string)$configs['app.conf']->get('dont_enforce_access_settings') === '0', 'Native access enforcement must remain enabled.');
 $app = $configs['app.conf'];
-checkKclConfig((string)$app->get('allowThemeInheritance') === '0', 'Pawtucket 2.0.10 configuration inheritance must stay disabled so the parent cannot replace the KCL root.');
-checkKclConfig($app->get('inheritFrom') === 'tadl', 'Scope-aware parent views must remain available.');
+checkKclConfig((string)$app->get('allowThemeInheritance') === '0', 'KCL must retain its own configuration.');
+checkKclConfig(!$app->get('inheritFrom') && (!$app->exists('inherit_from') || !$app->get('inherit_from')), 'KCL must not inherit another theme.');
 checkKclConfig($app->get('tadl_catalogue_root_idno') === 'kcl', 'The active catalogue boundary must be KCL.');
 checkKclConfig((string)$app->get('dont_use_search_log') === '1', 'Public searches must not write catalogue search logs.');
 checkKclConfig((string)$app->get('always_use_session_based_storage_for_find_result_contexts') === '1', 'Navigation contexts must use native sessions.');

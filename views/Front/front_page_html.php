@@ -6,7 +6,6 @@ $date_field = preg_match('/\A[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)?\z
 	? 'ca_objects.'.$date_element : null;
 ?>
 <section class="kcl-intro" aria-labelledby="archive-title">
-	<p class="kcl-eyebrow">Kalkaska County, Michigan · <span class="kcl-date-range">1879–2012</span></p>
 	<h1 id="archive-title">Newspaper archive</h1>
 	<p class="kcl-welcome">Welcome to Kalkaska County Library's digital newspaper archive, featuring issues of <em>The Leader and Kalkaskian</em> and predecessor newspapers, from 1879 to 2012.</p>
 </section>

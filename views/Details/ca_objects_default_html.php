@@ -6,7 +6,7 @@
  * See https://www.gnu.org/licenses/gpl-3.0.html.
  */
 if (!function_exists('tadlDetailNavigation')) {
-	require_once dirname(__DIR__, 3).'/tadl/views/Details/detail_field_helpers.php';
+	require_once __DIR__.'/detail_field_helpers.php';
 }
 if (!function_exists('tadlObjectDocumentTextDisclosure')) {
 	require_once dirname(__DIR__, 2).'/helpers/document_text_disclosure.php';

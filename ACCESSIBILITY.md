@@ -29,7 +29,7 @@ not a claim that every archived newspaper PDF conforms to WCAG.
 
 ## Verification
 
-Standalone regressions render actual theme views and execute the real shared
+Standalone regressions render actual theme views and execute the real local
 dialog adapter and bundled PDF keyboard handler against synthetic controls:
 
 ```sh
@@ -40,10 +40,10 @@ php tests/media_panel_test.php
 php tests/semantic_html_test.php
 ```
 
-The sibling TADL media/download, result-controls, document-text and navigation
-tests cover the reused runtime. Its full PHP suite passed with PHP 8.3, matching
-the deployed application. PHP 8.5 currently exposes an unrelated deprecation in
-the gallery test fixture; it is not the deployment interpreter.
+KCL owns its scope, browse, access, cache and media/download regressions. The
+standalone check runs its actual views/runtime from an isolated copy without a
+sibling custom theme, against stock Pawtucket 2.0.10 and PHP 8.3. Earlier TADL
+test results describe the source baseline; KCL no longer needs that checkout.
 
 Live Chrome checks include keyboard-only controls, skip navigation, thumbnail
 focus, dialog/secondary-dialog focus and Escape behavior, reader-only scrolling,

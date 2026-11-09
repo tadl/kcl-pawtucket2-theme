@@ -16,19 +16,17 @@ function mediaDisplayFixture(array $files): Configuration {
 }
 $base = $core.'/app/conf/media_display.conf';
 $native = mediaDisplayFixture([$base]);
-$parent = mediaDisplayFixture([$base, $theme.'/../tadl/conf/media_display.conf']);
 $kcl = mediaDisplayFixture([$base, $theme.'/conf/media_display.conf']);
-if (!is_link($theme.'/conf/media_display.conf')
-	|| realpath($theme.'/conf/media_display.conf') !== realpath($theme.'/../tadl/conf/media_display.conf')) {
-	throw new RuntimeException('KCL must reuse the complete TADL media display configuration.');
+if (is_link($theme.'/conf/media_display.conf') || !is_file($theme.'/conf/media_display.conf')) {
+	throw new RuntimeException('KCL must own its media display configuration.');
 }
 $detail = $kcl->getAssoc('detail')['pdf'];
 $overlay = $kcl->getAssoc('media_overlay')['pdf'];
 if ($native->getAssoc('detail')['pdf']['viewer'] !== 'pdfjs'
-	|| $detail !== $parent->getAssoc('detail')['pdf']
 	|| $detail['viewer'] !== 'TileViewer' || $detail['display_version'] !== 'tilepic'
 	|| $detail['alt_display_version'] !== 'mediumlarge' || (int)$detail['no_overlay'] !== 0
-	|| $overlay !== $parent->getAssoc('media_overlay')['pdf'] || $overlay['viewer'] !== 'pdfjs') {
-	throw new RuntimeException('PDF details must match TADL previews while retaining its full PDF overlay.');
+	|| $overlay['viewer'] !== 'pdfjs'
+	|| array_diff(array_keys($native->getAssoc('detail')), array_keys($kcl->getAssoc('detail')))) {
+	throw new RuntimeException('PDF details must keep page previews, the full overlay and all native media groups.');
 }
-echo "Media display passed: physical TADL configuration, detail preview and full PDF overlay.\n";
+echo "Media display passed: owned configuration, detail preview and full PDF overlay.\n";
