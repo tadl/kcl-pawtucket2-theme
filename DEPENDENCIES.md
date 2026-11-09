@@ -4,6 +4,9 @@ KCL depends on the sibling `tadl` theme. Install its complete source under
 `themes/tadl/` before installing KCL under `themes/kcl/`, and preserve symlinks.
 The initial dependency was inspected at TADL commit
 `280b7eaf25d3e7ea8ccdfbfbb798443124831bd2` on Pawtucket 2.0.10.
+The current UI, accessibility and scoped-browse deployment is verified with
+TADL `12f2f11c186971713acd12d942908241ef47aca7`. Use that revision or a newer
+compatible TADL source when installing this KCL version.
 
 `conf/app.conf` sets `inheritFrom = tadl` and
 `tadl_catalogue_root_idno = kcl`. The configured institution root must resolve
@@ -53,6 +56,11 @@ Providence media tree. Review media storage URLs and web-server access rules
 when provisioning the instance; see `support/MEDIA_ALLOWLIST.md` for the installed
 exact-path guard. Keep its session and cache namespaces separate
 from other Pawtucket instances.
+For native Redis caching, use a distinct Redis database per installation:
+Pawtucket 2.0.10 Redis keys omit the application name. Keep native browse
+`cache_timeout = 0`; a positive native TTL does not validate current catalogue
+membership, publication or import changes. The separate TADL result cache has
+its own revision checks and configuration flag.
 
 Issue dates are profile text (`date.dates_value`), not native date attributes.
 Decade links must use the supported field-bound text search; a native
