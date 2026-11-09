@@ -7,7 +7,7 @@ sibling TADL theme as described in [DEPENDENCIES.md](DEPENDENCIES.md).
 
 The landing page includes a prominent newspaper search, a browse-all link,
 15 decade links, and the supplied welcome, OCR and use text. Issue details use
-the native document viewer, downloads and result navigation. The public
+TADL's page preview with click-to-open document viewer, downloads and result navigation. The public
 navigation has no multi-collection directory, gallery or account menu.
 
 ## Design and content
@@ -87,6 +87,7 @@ production media-map generator deliberately loads the configured application.
 php support/check_config.php /path/to/pawtucket2
 php tests/decade_links_test.php
 php tests/assets_test.php
+php tests/media_display_test.php
 php tests/error_view_test.php
 php tests/media_allowlist_test.php
 find views support -name '*.php' -exec php -l {} \;

@@ -22,6 +22,11 @@ assets are supplied explicitly instead of relying on native asset inheritance.
 Do not enable the configuration merge without checking effective runtime root,
 browse types and detail types with an actual application bootstrap.
 
+`conf/media_display.conf` links directly to TADL's configuration. This preserves
+its document preview on issue pages and PDF.js in the full media overlay. View
+inheritance alone would fall back to the native application's inline PDF.js
+settings, which are unsuitable for the normal detail-page preview.
+
 Pawtucket does not inherit controllers, helpers or plugins. These relative
 directory links deliberately reuse the same tested implementation:
 
