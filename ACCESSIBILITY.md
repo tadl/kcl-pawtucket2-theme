@@ -14,7 +14,7 @@ not a claim that every archived newspaper PDF conforms to WCAG.
   thumbnails describe their function rather than an imported filename.
 - Thumbnail focus frames remain visible inside clipped image containers. Search
   focus darkens the existing border; forced-colors mode adds an inset system
-  outline. Other controls retain the inherited two-color focus indicator.
+  outline. Other controls retain the bundled base UI's two-color focus indicator.
 - The PDF dialog locks background scrolling, traps focus and restores the opener.
   Collapsed PDF sidebars are inert. Native toolbar states and find results are
   exposed through ARIA; nested dialogs receive focus and return it on closing.

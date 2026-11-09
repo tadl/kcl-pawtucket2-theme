@@ -146,7 +146,7 @@
 .kcl-footer-links { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; text-align: right; }
 .kcl-footer-credit { display: flex; justify-content: space-between; gap: 18px; padding-top: 18px; border-top: 1px solid #547087; font-size: 13px; }
 .kcl-theme #footer.kcl-footer a:hover { text-decoration: underline; }
-/* Carry the palette into the inherited results and detail controls. */
+/* Carry the palette into the local results and detail controls. */
 .kcl-theme .btn-default { border-color: #afc8b4; background: #fff; color: var(--kcl-link); }
 .kcl-theme .btn-default:hover, .kcl-theme .btn-default:focus { background: #edf4ee; color: var(--kcl-link); }
 .kcl-theme .btn-primary, .kcl-theme .pagination > .active > a { border-color: var(--kcl-green); background: var(--kcl-green); color: #fff; }

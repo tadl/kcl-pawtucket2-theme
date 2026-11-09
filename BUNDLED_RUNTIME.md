@@ -6,7 +6,7 @@ at `12f2f11c186971713acd12d942908241ef47aca7`, for Pawtucket 2.0.10. The copied
 runtime is part of this repository, not a live dependency. TADL updates must be
 reviewed and explicitly ported if wanted; normal KCL deployments copy only KCL.
 
-The owned code includes scoped controllers/helpers/plugins, inherited result and
+The owned code includes scoped controllers/helpers/plugins, copied result and
 media views, accessibility/browser scripts, base CSS and the adapted TileViewer.
 Existing KCL views and branding were retained. Literal view includes now resolve
 locally. Whitespace was normalized in copied templates without changing multiline

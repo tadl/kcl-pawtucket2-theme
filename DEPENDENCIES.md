@@ -17,7 +17,9 @@ The theme has no separate Composer or npm runtime installation.
 nondeleted top-level collection. Its descendants supply the collection/object/
 representation boundary, supplemented by native publication, bundle, type/source
 and ACL checks. Missing, non-root or ambiguous configured roots deny material.
-Never replace a missing boundary with unrestricted native templates.
+Keep the setting nonempty and equal to `kcl`: a blank or absent setting selects
+the generic runtime's unscoped mode. Never repair a missing root by clearing the
+setting or replacing the boundary with unrestricted native templates.
 
 The local `conf/media_display.conf` preserves the issue-page first-page preview
 and full PDF.js dialog. Native viewers, downloads, callbacks and media identifiers
@@ -41,3 +43,7 @@ fall back to the native image without a detector service.
 
 Review native controllers, view APIs and the PDF keyboard/focus bridge when
 upgrading the application. No core patch is required by this theme.
+
+See [installation and operations](docs/OPERATIONS.md) for setup, isolated Redis,
+deployment and migration from the former symlinked installation, and
+[development](docs/DEVELOPMENT.md) for local verification.

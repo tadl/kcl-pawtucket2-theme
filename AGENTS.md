@@ -2,6 +2,7 @@
 
 Read `README.md` and `DEPENDENCIES.md` before changes. KCL owns its runtime;
 no sibling theme, symlink or custom view/config inheritance may be required.
+Use `docs/README.md` to find architecture, development and operations guides.
 
 - Keep this focused on a single newspaper archive; preserve the supplied copy.
 - Preserve native access checks and document-viewer initialization.
@@ -18,3 +19,5 @@ no sibling theme, symlink or custom view/config inheritance may be required.
   Native application libraries are allowed; another custom theme is not.
 - Work on `main`; commit coherent verified changes. Source commits and pushes
   remain separate from instance setup and deployment.
+- Update the relevant maintainer guide when configuration, deployment or test
+  contracts change. Keep private operational evidence outside this repository.

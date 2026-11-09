@@ -5,6 +5,11 @@ collection, covering 1879–2012. Install this checkout as `themes/kcl/`; no TAD
 theme, sibling checkout, symlink, submodule, Composer install or frontend build
 is required. See [DEPENDENCIES.md](DEPENDENCIES.md) for application prerequisites.
 
+The [maintainer documentation](docs/README.md) covers
+[architecture and configuration](docs/ARCHITECTURE.md),
+[development and verification](docs/DEVELOPMENT.md), and
+[installation, deployment and troubleshooting](docs/OPERATIONS.md).
+
 The home page has newspaper search, browse-all and 15 decade links, plus the
 supplied welcome, OCR and use text. Issue details put the preview on the left and
 title, metadata, result navigation and native media actions on the right; narrow
