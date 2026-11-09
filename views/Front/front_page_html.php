@@ -7,7 +7,6 @@ $date_field = preg_match('/\A[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)?\z
 ?>
 <section class="kcl-intro" aria-labelledby="archive-title">
 	<h1 id="archive-title">Newspaper archive</h1>
-	<p class="kcl-welcome">Welcome to Kalkaska County Library's digital newspaper archive, featuring issues of <em>The Leader and Kalkaskian</em> and predecessor newspapers, from 1879 to 2012.</p>
 </section>
 
 <section class="kcl-search-panel" aria-labelledby="search-title">

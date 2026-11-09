@@ -10,8 +10,8 @@ The [maintainer documentation](docs/README.md) covers
 [development and verification](docs/DEVELOPMENT.md), and
 [installation, deployment and troubleshooting](docs/OPERATIONS.md).
 
-The home page has newspaper search, browse-all and 15 decade links, plus the
-supplied welcome, OCR and use text. Issue details put the preview on the left and
+The home page has an archive heading, newspaper search, browse-all and 15 decade
+links, plus OCR and use text. Issue details put the preview on the left and
 title, metadata, result navigation and native media actions on the right; narrow
 screens stack the columns. Imported filename captions are omitted. Available OCR
 has an access-checked HTML disclosure. The document dialog preserves native

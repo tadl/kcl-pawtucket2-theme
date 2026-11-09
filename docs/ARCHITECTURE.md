@@ -30,7 +30,7 @@ There is no custom parent theme or build step. See the
 | --- | --- |
 | Header, navigation, search on interior pages | [pageHeader.php](../views/pageFormat/pageHeader.php) |
 | Footer and PDF dialog compatibility bridge | [pageFooter.php](../views/pageFormat/pageFooter.php) |
-| Homepage search, welcome text and decades | [front_page_html.php](../views/Front/front_page_html.php) |
+| Homepage heading, search and decades | [front_page_html.php](../views/Front/front_page_html.php) |
 | Supplied archive/OCR/use text | [archive_text_html.php](../views/About/archive_text_html.php) |
 | Issue preview, title, metadata and actions | [ca_objects_default_html.php](../views/Details/ca_objects_default_html.php) |
 | Brand styles and owned base UI | [theme.css](../assets/pawtucket/css/theme.css), [base.css](../assets/pawtucket/css/base.css) |

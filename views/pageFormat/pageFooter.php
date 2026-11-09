@@ -5,8 +5,8 @@
 	<footer id="footer" class="kcl-footer">
 		<div class="container kcl-shell kcl-footer-inner">
 			<div>
-				<strong>Kalkaska County Library</strong>
-				<p>Digital newspaper archive · 1879–2012</p>
+				<strong><a href="https://www.kalkaskalibrary.org/">Kalkaska County Library</a></strong>
+				<p>Digital newspaper archive</p>
 			</div>
 			<div class="kcl-footer-links">
 				<a href="mailto:info@kalkaskalibrary.org">info@kalkaskalibrary.org</a>
