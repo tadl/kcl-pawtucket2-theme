@@ -135,6 +135,7 @@
 .kcl-home .kcl-about { margin-top: 42px; padding-top: 32px; border-top: 1px solid var(--kcl-line); }
 .kcl-archive-text { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; }
 .kcl-archive-text p { font-size: 16px; line-height: 1.75; }
+.kcl-theme .kcl-archive-text-heading { color: var(--kcl-navy); font-size: 21px; }
 .kcl-interior-search { padding: 18px 0; border-bottom: 1px solid var(--kcl-line); background: #f2f5f2; }
 .kcl-interior-search input, .kcl-interior-search button { min-height: 46px; padding-top: 8px; padding-bottom: 8px; font-size: 16px; }
 .kcl-theme #footer.kcl-footer { position: static; width: 100%; height: auto; margin: 0; padding: 32px 0 20px; border: 0; background: var(--kcl-navy); color: #fff; font-size: 15px; }
@@ -142,7 +143,7 @@
 .kcl-footer strong { font-size: 18px; }
 .kcl-theme .kcl-footer p { margin: 5px 0 16px; }
 .kcl-theme #footer.kcl-footer a { color: #fff; }
-.kcl-footer-links { display: flex; flex-direction: column; text-align: right; }
+.kcl-footer-links { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; text-align: right; }
 .kcl-footer-credit { display: flex; justify-content: space-between; gap: 18px; padding-top: 18px; border-top: 1px solid #547087; font-size: 13px; }
 .kcl-theme #footer.kcl-footer a:hover { text-decoration: underline; }
 /* Carry the palette into the inherited results and detail controls. */
@@ -151,12 +152,47 @@
 .kcl-theme .btn-primary, .kcl-theme .pagination > .active > a { border-color: var(--kcl-green); background: var(--kcl-green); color: #fff; }
 .kcl-theme .form-control { min-height: 38px; font-size: 15px; }
 .kcl-theme label { font-size: 14px; text-transform: none; }
-.kcl-issue-nav { display: flex; align-items: center; gap: 24px; margin-bottom: 28px; }
-.kcl-issue-nav .small { display: inline; margin-left: 6px; font-size: 14px; }
+.kcl-theme .tadl-results-page-gap { color: #666; }
+/* Keep keyboard focus visible above previews whose containers clip their edges. */
+.kcl-theme :is(.bResultItemImg, .bResultListItemImg) a { position: relative; }
+.kcl-theme :is(.bResultItemImg, .bResultListItemImg) a:focus-visible { outline: none; }
+.kcl-theme :is(.bResultItemImg, .bResultListItemImg) a:focus-visible::after {
+	position: absolute;
+	inset: 3px;
+	border: 3px solid var(--kcl-navy);
+	box-shadow: 0 0 0 2px #fff;
+	content: "";
+	pointer-events: none;
+}
+@media (forced-colors: active) {
+	.kcl-theme .kcl-search-form input:focus {
+		outline: 2px solid CanvasText;
+		outline-offset: -4px;
+	}
+	.kcl-theme :is(.bResultItemImg, .bResultListItemImg) a:focus-visible::after {
+		forced-color-adjust: none;
+		border-color: CanvasText;
+		box-shadow: 0 0 0 2px Canvas;
+	}
+}
+.kcl-issue-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 40px; }
+.kcl-issue-media, .kcl-issue-info { min-width: 0; }
+.kcl-theme .kcl-issue-info > .tadl-record-nav { margin-bottom: 24px; }
+.kcl-theme .kcl-issue .tadl-record-nav a { min-height: 44px; }
 .kcl-issue-metadata { display: flex; flex-wrap: wrap; gap: 12px 40px; margin: 0 0 28px; }
 .kcl-issue-metadata dt { color: var(--kcl-muted); font-size: 13px; font-weight: 400; }
 .kcl-issue-metadata dd { font-size: 17px; }
-.kcl-issue-viewer { margin: 24px 0; }
+.kcl-issue-viewer { margin: 0 0 24px; }
+.kcl-theme .kcl-issue-viewer .repViewerCont img {
+	width: 100%;
+	max-width: 100%;
+	height: auto;
+	max-height: 650px;
+	object-fit: contain;
+	object-position: center top;
+}
+.kcl-theme .kcl-issue .tadl-image-toolbar { justify-content: flex-start; }
+.kcl-issue-media-actions { margin-bottom: 24px; }
 .kcl-issue-thumbnails ul { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 32px; padding: 0; list-style: none; }
 .kcl-issue-thumbnails img { max-width: 120px; height: auto; }
 .kcl-issue-description { max-width: 850px; overflow-wrap: anywhere; }
@@ -219,6 +255,20 @@
 	padding: 2px 4px;
 }
 @media (max-width: 767px) {
+	.kcl-issue-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+	.kcl-theme .kcl-issue-info > .tadl-record-nav { justify-content: flex-start; }
+	.kcl-theme #caMediaOverlayContent .findbar { left: 8px; min-width: 0; max-width: calc(100% - 16px); }
+	.kcl-theme #caMediaOverlayContent #overlayContainer:not(.hidden) { display: block; overflow: auto; }
+	.kcl-theme #caMediaOverlayContent #overlayContainer > .container:not(.hidden) {
+		display: block;
+		width: 100%;
+		min-width: 0;
+		max-width: 100%;
+		padding: 12px;
+	}
+	.kcl-theme #caMediaOverlayContent #overlayContainer > .container > .dialog { box-sizing: border-box; width: 100%; max-width: 100%; padding: 12px; }
+	.kcl-theme #caMediaOverlayContent #documentPropertiesOverlay .row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; margin: 0 0 12px; }
+	.kcl-theme #caMediaOverlayContent #documentPropertiesOverlay .row > * { display: block; min-width: 0; max-width: 100%; width: auto; margin: 0; overflow-wrap: anywhere; }
 	.kcl-theme #caMediaPanel .tadl-document-controls { padding-right: 8px; padding-left: 8px; }
 	.kcl-theme #caMediaPanel .tadl-document-controls .nextPreviousLinks {
 		flex: 1 1 100%;

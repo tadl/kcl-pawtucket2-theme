@@ -7,8 +7,10 @@ sibling TADL theme as described in [DEPENDENCIES.md](DEPENDENCIES.md).
 
 The landing page includes a prominent newspaper search, a browse-all link,
 15 decade links, and the supplied welcome, OCR and use text. Issue details use
-TADL's page preview with click-to-open document viewer, downloads and result
-navigation. The modal reuses TADL's background scroll lock and focus handling;
+TADL's page preview on the left, with the issue title, metadata, navigation and
+media actions on the right. Narrow screens stack the columns. Imported filename
+captions are omitted. Available OCR has an access-checked HTML text disclosure.
+The modal reuses TADL's background scroll lock and focus handling;
 closing it restores the issue page. The public navigation has no multi-collection
 directory, gallery or account menu.
 
@@ -19,6 +21,7 @@ navy `#243f5d`, green `#267a38`, Lato, and a muted gray search border. The defau
 theme already supplies the Lato fonts; no external font service is requested.
 Search focus darkens the existing border without adding an overlapping ring.
 The supplied archive wording is preserved, including its fair-use link.
+See [ACCESSIBILITY.md](ACCESSIBILITY.md) for the WCAG 2.2 review, checks and limits.
 
 - Page chrome: `views/pageFormat/`.
 - Homepage and decade links: `views/Front/front_page_html.php`.
@@ -62,6 +65,9 @@ available records and indexed text grow as it finishes. The planned upgrade to
 - Public search history uses sessions rather than database search logging.
   Result caching is disabled while import is running. Comments, sharing,
   lightboxes, registration and record-summary PDF export are disabled.
+- The deployed native cache uses Redis. Give each Pawtucket installation its
+  own Redis database: native 2.0.10 Redis keys do not include the application
+  name. Native browse-result TTL remains disabled to keep catalogue changes fresh.
 - Direct static media needs the exact-path Apache allowlist described in
   [MEDIA_ALLOWLIST.md](support/MEDIA_ALLOWLIST.md). The installed read-only
   generator refreshes it each minute; PDF byte-range delivery remains native.
@@ -92,6 +98,7 @@ php tests/decade_links_test.php
 php tests/assets_test.php
 php tests/media_display_test.php
 php tests/media_panel_test.php
+php tests/semantic_html_test.php
 php tests/error_view_test.php
 php tests/media_allowlist_test.php
 find views support -name '*.php' -exec php -l {} \;

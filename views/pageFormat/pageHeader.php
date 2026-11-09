@@ -16,12 +16,12 @@ $page_title = MetaTagManager::getWindowTitle() ?: 'Kalkaska County Library Newsp
 </head>
 <body class="kcl-theme<?= $is_home ? ' kcl-home' : ''; ?>">
 	<a class="kcl-skip-link" href="#main">Skip to main content</a>
-	<div class="kcl-utility">
-		<div class="container kcl-shell">
-			<a href="https://www.kalkaskalibrary.org/">Visit the library website <span aria-hidden="true">↗</span></a>
-		</div>
-	</div>
 	<header class="kcl-header">
+		<div class="kcl-utility">
+			<div class="container kcl-shell">
+				<a href="https://www.kalkaskalibrary.org/">Visit the library website <span aria-hidden="true">↗</span></a>
+			</div>
+		</div>
 		<div class="container kcl-shell kcl-masthead">
 			<a class="kcl-brand" href="<?= htmlspecialchars($home_url, ENT_QUOTES, 'UTF-8'); ?>" aria-label="Kalkaska County Library newspaper archive home">
 				<img src="<?= htmlspecialchars($theme_url.'/assets/pawtucket/graphics/kcl-logo.png', ENT_QUOTES, 'UTF-8'); ?>" width="300" height="77" alt="Kalkaska County Library">
