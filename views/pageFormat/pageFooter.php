@@ -13,12 +13,11 @@
 				<a href="tel:2312589411">231-258-9411</a>
 			</div>
 		</div>
+<?php if (CookieOptionsManager::cookieManagerEnabled()) { ?>
 		<div class="container kcl-shell kcl-footer-credit">
-			<span>Powered by <a href="https://www.collectiveaccess.org/">CollectiveAccess</a></span>
-			<?php if (CookieOptionsManager::cookieManagerEnabled()) { ?>
-				<a href="<?= htmlspecialchars(caNavUrl($this->request, '', 'Cookies', 'manage'), ENT_QUOTES, 'UTF-8'); ?>">Manage cookies</a>
-			<?php } ?>
+			<a href="<?= htmlspecialchars(caNavUrl($this->request, '', 'Cookies', 'manage'), ENT_QUOTES, 'UTF-8'); ?>">Manage cookies</a>
 		</div>
+<?php } ?>
 	</footer>
 	<?= TooltipManager::getLoadHTML(); ?>
 	<div id="caMediaPanel" role="dialog" aria-modal="true" aria-label="Document and image viewer" aria-hidden="true" tabindex="-1">
