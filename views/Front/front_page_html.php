@@ -1,6 +1,9 @@
 <?php
 $search_url = caNavUrl($this->request, '', 'Search', 'objects');
 $browse_url = caNavUrl($this->request, '', 'Browse', 'objects', ['clear' => 1]);
+$date_element = trim((string)$this->request->config->get('kcl_issue_date_element'));
+$date_field = preg_match('/\A[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)?\z/', $date_element)
+	? 'ca_objects.'.$date_element : null;
 ?>
 <section class="kcl-intro" aria-labelledby="archive-title">
 	<p class="kcl-eyebrow">Kalkaska County, Michigan · <span class="kcl-date-range">1879–2012</span></p>
@@ -26,8 +29,11 @@ $browse_url = caNavUrl($this->request, '', 'Browse', 'objects', ['clear' => 1]);
 	</div>
 	<ul class="kcl-decade-list">
 <?php for ($decade = 1870; $decade <= 2010; $decade += 10) {
-	$decade_url = caNavUrl($this->request, '', 'Browse', 'objects', [
-		'clear' => 1, 'facet' => 'decade_facet', 'id' => $decade.'s'
+	// ISO text dates retain their year prefix in the native search index.
+	// An invalid configuration must not turn this into an unrestricted search.
+	$decade_query = $date_field ? $date_field.':'.substr((string)$decade, 0, 3).'*' : 'ca_objects.object_id:0';
+	$decade_url = caNavUrl($this->request, '', 'Search', 'objects', [
+		'search' => $decade_query, 'sort' => 'Date', 'direction' => 'asc'
 	]);
 ?>
 		<li><a href="<?= htmlspecialchars($decade_url, ENT_QUOTES, 'UTF-8'); ?>"><span class="sr-only">Browse newspapers from the </span><?= $decade; ?>s<?php if ($decade === 1870) { ?><small>1879</small><?php } elseif ($decade === 2010) { ?><small>2010–2012</small><?php } ?></a></li>

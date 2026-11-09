@@ -12,7 +12,7 @@ $page_title = MetaTagManager::getWindowTitle() ?: 'Kalkaska County Library Newsp
 	<title><?= htmlspecialchars($page_title, ENT_QUOTES, 'UTF-8'); ?></title>
 	<link rel="icon" type="image/png" href="<?= htmlspecialchars($theme_url.'/assets/pawtucket/graphics/favicon.png', ENT_QUOTES, 'UTF-8'); ?>">
 	<?= MetaTagManager::getHTML(); ?>
-	<?= AssetLoadManager::getLoadHTML($this->request); ?>
+	<?= function_exists('tadlAssetLoadHTML') ? tadlAssetLoadHTML($this->request) : AssetLoadManager::getLoadHTML($this->request); ?>
 </head>
 <body class="kcl-theme<?= $is_home ? ' kcl-home' : ''; ?>">
 	<a class="kcl-skip-link" href="#main">Skip to main content</a>

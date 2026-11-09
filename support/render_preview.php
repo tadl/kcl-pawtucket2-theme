@@ -58,6 +58,12 @@ class TooltipManager {
 	public static function getLoadHTML(): string { return ''; }
 }
 class KclPreviewRequest {
+	public $config;
+	public function __construct() {
+		$this->config = new class {
+			public function get($key): ?string { return $key === 'kcl_issue_date_element' ? 'date.dates_value' : null; }
+		};
+	}
 	public function getController(): string { return 'Front'; }
 	public function getThemeUrlPath(): string { return ''; }
 }

@@ -30,17 +30,21 @@ function checkKclConfig(bool $condition, string $message): void {
 }
 $browse = $configs['browse.conf'];
 $types = $browse->getAssoc('browseTypes');
-$facet = $browse->getAssoc('ca_objects')['facets']['decade_facet'] ?? [];
+$facets = $browse->getAssoc('ca_objects')['facets'] ?? [];
 checkKclConfig(array_keys($types) === ['objects'], 'Default unrelated browse types were retained.');
 checkKclConfig(array_keys($types['objects']['views']) === ['images', 'list'], 'Unexpected browse views.');
-checkKclConfig($types['objects']['availableFacets'] === ['decade_facet'], 'Decade facet is unavailable.');
-checkKclConfig(($facet['type'] ?? null) === 'normalizedDates' && ($facet['normalization'] ?? null) === 'decades', 'Decade facet must normalize native dates.');
+checkKclConfig($facets === [], 'Text dates must not use a normalizedDates facet.');
 $date_element = $configs['global.conf']->get('kcl_issue_date_element');
-checkKclConfig(($facet['element_code'] ?? null) === $date_element, 'Date mapping did not interpolate.');
-checkKclConfig($types['objects']['sortBy']['Date'] === 'ca_objects.'.$date_element, 'Issue date sort does not match the facet.');
+checkKclConfig($types['objects']['sortBy']['Date'] === 'ca_objects.'.$date_element, 'Issue date sort does not match the configured date field.');
 checkKclConfig(array_keys($configs['search.conf']->getAssoc('multisearchTypes')) === ['objects'], 'Default unrelated searches were retained.');
 checkKclConfig($configs['search.conf']->getAssoc('advancedSearchTypes') === [], 'Default sample advanced forms were retained.');
 checkKclConfig(array_keys($configs['detail.conf']->getAssoc('detailTypes')) === ['objects'], 'Default unrelated detail types were retained.');
 checkKclConfig((string)$configs['app.conf']->get('dont_enforce_access_settings') === '0', 'Native access enforcement must remain enabled.');
+$app = $configs['app.conf'];
+checkKclConfig((string)$app->get('allowThemeInheritance') === '0', 'Pawtucket 2.0.10 configuration inheritance must stay disabled so the parent cannot replace the KCL root.');
+checkKclConfig($app->get('inheritFrom') === 'tadl', 'Scope-aware parent views must remain available.');
+checkKclConfig($app->get('tadl_catalogue_root_idno') === 'kcl', 'The active catalogue boundary must be KCL.');
+checkKclConfig((string)$app->get('dont_use_search_log') === '1', 'Public searches must not write catalogue search logs.');
+checkKclConfig((string)$app->get('always_use_session_based_storage_for_find_result_contexts') === '1', 'Navigation contexts must use native sessions.');
 checkKclConfig(!$configs['front.conf']->get('front_page_set_code'), 'Default featured set leaked into the theme.');
 fwrite(STDOUT, "Native configuration checks passed (".count($configs)." files; default overlays and date mapping).\n");

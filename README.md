@@ -1,8 +1,9 @@
 # KCL newspaper archive theme
 
 A small Pawtucket 2.0.10 theme for Kalkaska County Library's single newspaper
-collection, covering 1879–2012. It lives beside `tadl/` and `ncf/` and falls back
-to Pawtucket's stock `default` theme, independently of those sibling themes.
+collection, covering 1879–2012. It lives beside `tadl/` and `ncf/` and reuses
+TADL's tested collection boundary and result/media runtime. Install the complete
+sibling TADL theme as described in [DEPENDENCIES.md](DEPENDENCIES.md).
 
 The landing page includes a prominent newspaper search, a browse-all link,
 15 decade links, and the supplied welcome, OCR and use text. Issue details use
@@ -33,42 +34,61 @@ Library branding remains its owner's property. Theme code follows
 CollectiveAccess's GPLv3 license; native media-panel setup and the issue template
 are adapted from the default theme, copyright Whirl-i-Gig. See `LICENSE`.
 
-## Instance setup still to do
+## Runtime and deployment
 
-This change creates the theme only. It does not configure a running instance,
-connect to a database, change publication settings, index PDFs or deploy files.
-For later provisioning:
+The initial instance was provisioned November 9, 2026 at
+[history.kalkaskalibrary.org](https://history.kalkaskalibrary.org/), with a
+separate Pawtucket 2.0.10 installation. The newspaper import is ongoing;
+available records and indexed text grow as it finishes. The planned upgrade to
+2.0.12 is separate work; recheck the inheritance workaround during that upgrade.
 
-1. Install this folder as `themes/kcl` alongside the stock `themes/default`,
-   and select `kcl` using the instance's normal theme configuration.
-2. Check the issue date field in `conf/global.conf`. It defaults to
-   `date.dates_value`, matching the existing workspace profile. It must be a
-   native date attribute for normalized decade browsing and chronological sorting.
-3. Confirm that the public catalogue contains only the intended KCL newspapers.
-   These object-only display settings do **not** isolate a collection in a
-   shared database. If the new instance shares a larger catalogue, add and test
-   a collection boundary across results, direct details and media before launch.
-   No collection identifier or database ID has been guessed here.
-4. Confirm that native search indexes the newspaper OCR/PDF text, that intended
-   objects and representations are public, and that PDF derivatives/viewing work.
-   The theme sends queries to native `Search/objects`; it does not implement OCR.
-5. Check search, first/middle/last decade results, issue dates, paging, direct
-   links, keyboard access, document zoom and downloads in the real instance.
+- `tadl_catalogue_root_idno = kcl` restricts results, record details and native
+  media routes to the actual KCL hierarchy. Missing or ambiguous roots deny
+  material. Native publication, bundle, type/source and ACL checks still apply.
+- The date mapping is `date.dates_value`, a text attribute containing ISO issue
+  dates. Decade links use native field-bound prefix queries, such as
+  `ca_objects.date.dates_value:187*`, and chronological sorting. They do not use
+  native `normalizedDates`, which requires date-typed storage.
+- Controllers/helpers/plugins and selected assets link to the sibling TADL
+  source. Keep relative links intact. Required application flags are explicit:
+  native configuration inheritance is disabled because 2.0.10 would let parent
+  settings overwrite KCL's root. View inheritance remains enabled independently.
+- The physical `views/system/fatal_error_html.php` supplies KCL recovery pages
+  and correct missing/private-record statuses. Native fatal-error lookup does
+  not use ordinary view inheritance.
+- Public search history uses sessions rather than database search logging.
+  Result caching is disabled while import is running. Comments, sharing,
+  lightboxes, registration and record-summary PDF export are disabled.
+- Direct static media needs the exact-path Apache allowlist described in
+  [MEDIA_ALLOWLIST.md](support/MEDIA_ALLOWLIST.md). The installed read-only
+  generator refreshes it each minute; PDF byte-range delivery remains native.
+  Do not expose the shared media tree through an unguarded alternate alias or
+  enable the unguarded Tilepic PHP extractor.
 
-Native record, representation, bundle, type/source and ACL checks remain in
-place. Comments, sharing, lightboxes, registration and record-summary PDF export
-are disabled in the theme's normal interface; original-media downloads retain
-the native access-checked policy. This theme does not add route-level account or
-collection access controls.
+In the enclosing workspace, `./deploy kcl` installs the TADL runtime dependency
+into the KCL instance, then this theme. `./deploy tadl` updates only the TADL
+instance; no argument updates both. `./deploy --dry-run kcl` previews transfers.
+Routine theme deployment preserves application caches, sessions and services.
+The workstation wrapper delegates to TADL's tracked `support/deploy-themes.sh`.
+
+After import completes, verify full archive coverage and finish the legacy
+Omeka URL redirects using the completed crosswalk. Do not guess object matches
+from duplicate identifiers. The theme uses native OCR indexing and does not
+perform OCR or change catalogue records itself.
 
 ## Local checks and layout preview
 
 Use PHP 8+ and a local Pawtucket 2.0.10 source tree. The default source path is
 the workspace's sibling `pawtucket2/`; pass another path when working elsewhere.
-These helpers never load application `setup.php` or a database.
+The checks below never load application `setup.php` or a database. The separate
+production media-map generator deliberately loads the configured application.
 
 ```sh
 php support/check_config.php /path/to/pawtucket2
+php tests/decade_links_test.php
+php tests/assets_test.php
+php tests/error_view_test.php
+php tests/media_allowlist_test.php
 find views support -name '*.php' -exec php -l {} \;
 ```
 
