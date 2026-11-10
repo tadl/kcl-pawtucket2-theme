@@ -29,6 +29,7 @@ There is no custom parent theme or build step. See the
 | Change | Owning source |
 | --- | --- |
 | Header, navigation, search on interior pages | [pageHeader.php](../views/pageFormat/pageHeader.php) |
+| Mobile menu disclosure and responsive focus | [navigation.js](../assets/pawtucket/js/navigation.js), [theme.css](../assets/pawtucket/css/theme.css) |
 | Footer and PDF dialog compatibility bridge | [pageFooter.php](../views/pageFormat/pageFooter.php) |
 | Homepage heading, search and decades | [front_page_html.php](../views/Front/front_page_html.php) |
 | Supplied archive/OCR/use text | [archive_text_html.php](../views/About/archive_text_html.php) |

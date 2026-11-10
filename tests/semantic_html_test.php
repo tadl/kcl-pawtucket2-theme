@@ -77,6 +77,11 @@ foreach ([['Front', 'Front/front_page_html.php'], ['About', 'About/Index.php'], 
 	semanticCheck($xpath->query('//main[@id="main" and @tabindex="-1"]')->length === 1, 'Skip navigation needs one focusable main target.');
 	semanticCheck($xpath->query('//a[@class="kcl-skip-link" and @href="#main"]')->length === 1, 'Every normal page needs the skip link.');
 	semanticCheck($xpath->query('//body/header//div[@class="kcl-utility"]//a')->length === 1, 'The repeated utility link must be inside the banner landmark.');
+	semanticCheck($xpath->query('//nav[@aria-label="Primary navigation"]//button[@type="button" and @hidden and @aria-controls="kcl-primary-links" and @aria-expanded="false"]')->length === 1, 'Mobile navigation needs a named native disclosure button that stays hidden without JavaScript.');
+	$menu = $xpath->query('//nav[@aria-label="Primary navigation"]//div[@id="kcl-primary-links"]')->item(0);
+	semanticCheck($menu && !$menu->hasAttribute('hidden'), 'Navigation links must remain available without JavaScript.');
+	$menuLinks = $menu->getElementsByTagName('a');
+	semanticCheck(array_map(static fn($link) => trim($link->textContent), iterator_to_array($menuLinks)) === ['Browse by decade','Browse all','About the archive'], 'Mobile and desktop navigation must preserve link names and order.');
 	semanticCheck($xpath->query('//h1')->length === 1, 'Every normal page must have one primary heading.');
 	$level = 0;
 	foreach ($xpath->query('//h1|//h2|//h3|//h4|//h5|//h6') as $heading) {

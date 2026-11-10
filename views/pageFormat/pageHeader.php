@@ -32,9 +32,15 @@ $page_title = MetaTagManager::getWindowTitle() ?: 'Kalkaska County Library Newsp
 	</header>
 	<nav class="kcl-nav" aria-label="Primary navigation">
 		<div class="container kcl-shell">
-			<a href="<?= htmlspecialchars($home_url.'#decades', ENT_QUOTES, 'UTF-8'); ?>">Browse by decade</a>
-			<a href="<?= htmlspecialchars($browse_url, ENT_QUOTES, 'UTF-8'); ?>">Browse all</a>
-			<a href="<?= htmlspecialchars($home_url.'#about-archive', ENT_QUOTES, 'UTF-8'); ?>">About the archive</a>
+			<button class="kcl-menu-toggle" type="button" hidden aria-controls="kcl-primary-links" aria-expanded="false">
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+				<span>Menu</span>
+			</button>
+			<div id="kcl-primary-links" class="kcl-nav-links">
+				<a href="<?= htmlspecialchars($home_url.'#decades', ENT_QUOTES, 'UTF-8'); ?>">Browse by decade</a>
+				<a href="<?= htmlspecialchars($browse_url, ENT_QUOTES, 'UTF-8'); ?>">Browse all</a>
+				<a href="<?= htmlspecialchars($home_url.'#about-archive', ENT_QUOTES, 'UTF-8'); ?>">About the archive</a>
+			</div>
 		</div>
 	</nav>
 <?php if (!$is_home) { ?>

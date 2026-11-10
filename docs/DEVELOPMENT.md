@@ -30,6 +30,7 @@ From `/path/to/kcl`, start with the suites related to the change:
 | Configuration and date searches | `php support/check_config.php /path/to/pawtucket2`; `php tests/decade_links_test.php` |
 | Hierarchy boundary, browse and permissions | `php tests/catalogue_scope_test.php`; `php tests/catalogue_browse_scope_test.php`; `php tests/record_access_test.php` |
 | CSS, scripts, fonts and rendered structure | `php tests/assets_test.php /path/to/pawtucket2`; `php tests/semantic_html_test.php` |
+| Mobile navigation disclosure and resizing | `php tests/navigation_test.php` |
 | Document preview, dialog and keyboard bridge | `php tests/media_display_test.php /path/to/pawtucket2`; `php tests/media_panel_test.php /path/to/pawtucket2` |
 | Downloads and media guard | `php tests/image_download_test.php`; `php tests/media_allowlist_test.php` |
 | Cache, errors and deployment helper | `php tests/result_cache_test.php`; `php tests/error_view_test.php`; `php tests/deploy_theme_test.php` |
@@ -106,6 +107,9 @@ instance with representative synthetic/public fixtures:
   overrides. Check long labels and footer addresses for overflow or clipping.
 - Keyboard-only navigation, skip link, visible thumbnail/control focus, accessible
   labels and forced-colors mode.
+- Mobile Menu button, expanded state, keyboard activation and Escape focus return;
+  switching across the 768-pixel breakpoint must keep visible focus and restore
+  desktop links. With JavaScript disabled, navigation links remain available.
 - Document preview, zoom and downloads; modal scroll lock, focus containment,
   collapsed sidebars, toolbar Enter/Space, nested dialogs and Escape. Closing the
   reader must restore focus to its opener.

@@ -6,10 +6,16 @@ populated and empty results, Tiles/List browse layouts, issue details, the HTML
 OCR disclosure and the PDF reader's controls. This is an engineering review,
 not a claim that every archived newspaper PDF conforms to WCAG.
 
+The mobile menu added November 10 was also checked with native Enter/Space,
+Escape focus return, responsive resizing and JavaScript disabled.
+
 ## Interface changes
 
 - Page language, banner/main/search/navigation landmarks, associated search
   labels, a working skip link and consecutive heading levels.
+- Mobile navigation uses a native Menu button with `aria-expanded` and
+  `aria-controls`. Escape closes it and returns focus; desktop links remain
+  visible, and the unenhanced page keeps navigation links available.
 - Accessible names match visible media-action labels. Attached-document
   thumbnails describe their function rather than an imported filename.
 - Thumbnail focus frames remain visible inside clipped image containers. Search
@@ -38,6 +44,7 @@ php tests/assets_test.php
 php tests/media_display_test.php
 php tests/media_panel_test.php
 php tests/semantic_html_test.php
+php tests/navigation_test.php
 ```
 
 KCL owns its scope, browse, access, cache and media/download regressions. The

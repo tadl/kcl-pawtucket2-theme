@@ -17,6 +17,10 @@ screens stack the columns. Imported filename captions are omitted. Available OCR
 has an access-checked HTML disclosure. The document dialog preserves native
 initialization, locks background scrolling and restores focus when closed.
 
+The primary menu has Browse by decade, Browse all and About the archive. On
+mobile it opens from a labeled hamburger button; desktop keeps the links visible.
+Without JavaScript, the links remain available.
+
 ## Design and source
 
 Branding follows [KCL's website](https://www.kalkaskalibrary.org/): white space,

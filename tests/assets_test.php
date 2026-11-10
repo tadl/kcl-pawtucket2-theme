@@ -62,7 +62,7 @@ foreach (['main.css', 'fonts.css', 'base.css', 'accessibility.css'] as $file) {
 	assetCheck(!is_link($theme.'/assets/pawtucket/css/'.$file) && is_file($theme.'/assets/pawtucket/css/'.$file), 'KCL CSS must be a regular local file.');
 	assetCheck(str_contains($html, '/themes/kcl/assets/pawtucket/css/'.$file), 'Native loader must include local KCL styles.');
 }
-foreach (['user-features', 'display-preferences', 'thumbnail-focus', 'image-downloads', 'document-text'] as $file) {
+foreach (['user-features', 'display-preferences', 'thumbnail-focus', 'image-downloads', 'document-text', 'navigation'] as $file) {
 	assetCheck(!is_link($theme.'/assets/pawtucket/js') && is_file($theme.'/assets/pawtucket/js/'.$file.'.js'), 'Runtime scripts must be local files.');
 	assetCheck(str_contains($html, '/themes/kcl/assets/pawtucket/js/'.$file.'.js'), 'Native loader must include local runtime scripts.');
 }

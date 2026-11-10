@@ -66,11 +66,29 @@
 .kcl-date-range { white-space: nowrap; }
 .kcl-nav { background: var(--kcl-green); }
 .kcl-nav .kcl-shell { display: flex; flex-wrap: wrap; }
+.kcl-nav-links { display: flex; flex-wrap: wrap; }
+.kcl-nav-links[hidden], .kcl-theme .kcl-menu-toggle[hidden] { display: none; }
+.kcl-theme .kcl-menu-toggle {
+	display: none;
+	align-items: center;
+	gap: 10px;
+	min-height: 44px;
+	padding: 8px 12px;
+	border: 1px solid #fff;
+	border-radius: 0;
+	background: transparent;
+	color: #fff;
+	font: inherit;
+	font-weight: 700;
+	cursor: pointer;
+}
+.kcl-theme .kcl-menu-toggle:hover { background: #1f662f; }
 .kcl-theme .kcl-nav a { display: block; padding: 13px 24px; color: #fff; font-size: 16px; font-weight: 700; }
 .kcl-nav a:first-child { margin-left: -24px; }
 .kcl-theme .kcl-nav a:hover,
 .kcl-theme .kcl-nav a[aria-current="page"] { background: #1f662f; }
-.kcl-theme .kcl-nav a:focus-visible { outline-color: #fff; outline-offset: -5px; }
+.kcl-theme .kcl-nav a:focus-visible,
+.kcl-theme .kcl-menu-toggle:focus-visible { outline-color: #fff; outline-offset: -5px; }
 .kcl-content { flex: 1; padding-top: 48px; padding-bottom: 64px; }
 .kcl-theme #pageArea { padding: 0; border: 0; background: transparent; box-shadow: none; }
 .kcl-theme #pageArea::after { display: table; clear: both; content: ""; }
@@ -283,8 +301,11 @@
 	.kcl-brand img { width: 270px; }
 	.kcl-site-name { font-size: 16px; text-align: left; }
 	.kcl-site-name span { display: inline; margin-left: 8px; }
-	.kcl-theme .kcl-nav a { padding: 12px 14px; font-size: 14px; }
-	.kcl-nav a:first-child { margin-left: -14px; }
+	.kcl-nav .kcl-shell { flex-direction: column; align-items: stretch; padding-top: 8px; padding-bottom: 8px; }
+	.kcl-theme .kcl-menu-toggle { display: inline-flex; align-self: flex-end; }
+	.kcl-nav-links { flex-direction: column; width: 100%; margin-top: 8px; }
+	.kcl-theme .kcl-nav a { padding: 12px 0; font-size: 16px; }
+	.kcl-nav a:first-child { margin-left: 0; }
 	.kcl-content { padding-top: 32px; padding-bottom: 40px; }
 	.kcl-theme h1, .kcl-theme .kcl-intro h1 { font-size: 34px; }
 	.kcl-welcome { font-size: 18px; }

@@ -28,6 +28,7 @@ function copyPreviewFile(string $source, string $target): void {
 copyPreviewFile($core.'/assets/bootstrap/css/bootstrap.min.css', $output.'/default/bootstrap.min.css');
 copyPreviewFile($core.'/assets/jquery/js/jquery-3.7.1.min.js', $output.'/default/jquery.min.js');
 foreach (['css/main.css', 'css/fonts.css', 'css/base.css', 'css/accessibility.css', 'css/theme.css',
+	'js/navigation.js',
 	'graphics/kcl-logo.png', 'graphics/favicon.png', 'graphics/content-bg.jpg', 'graphics/header-bg.jpg'] as $file) {
 	copyPreviewFile($theme.'/assets/pawtucket/'.$file, $output.'/assets/pawtucket/'.$file);
 }
@@ -52,7 +53,7 @@ class AssetLoadManager {
 			.'<link rel="stylesheet" href="/assets/pawtucket/css/base.css">'
 			.'<link rel="stylesheet" href="/assets/pawtucket/css/accessibility.css">'
 			.'<link rel="stylesheet" href="/assets/pawtucket/css/theme.css">'
-			.'<script src="/default/jquery.min.js"></script><script>var caUI = {};</script>';
+			.'<script src="/default/jquery.min.js"></script><script src="/assets/pawtucket/js/navigation.js"></script><script>var caUI = {};</script>';
 	}
 }
 class CookieOptionsManager {

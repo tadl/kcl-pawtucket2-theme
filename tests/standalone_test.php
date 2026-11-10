@@ -96,7 +96,7 @@ try {
 	mkdir($temporary.'/runtime-tmp', 0700);
 	$php = [PHP_BINARY, '-d', 'open_basedir='.$allowed, '-d', 'sys_temp_dir='.$temporary.'/runtime-tmp'];
 	$commands = ['support/check_config.php','tests/assets_test.php','tests/media_display_test.php',
-		'tests/semantic_html_test.php','tests/media_panel_test.php','tests/decade_links_test.php',
+		'tests/semantic_html_test.php','tests/navigation_test.php','tests/media_panel_test.php','tests/decade_links_test.php',
 		'tests/error_view_test.php','tests/media_allowlist_test.php','tests/catalogue_scope_test.php',
 		'tests/catalogue_browse_scope_test.php','tests/record_access_test.php','tests/result_cache_test.php',
 		'tests/image_download_test.php'];
