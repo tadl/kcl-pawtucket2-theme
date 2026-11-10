@@ -1,6 +1,7 @@
 <?php
 $is_home = ($this->request->getController() === 'Front');
 $home_url = caNavUrl($this->request, '', 'Front', 'Index');
+$browse_url = caNavUrl($this->request, '', 'Browse', 'objects', ['clear' => 1]);
 $search_url = caNavUrl($this->request, '', 'Search', 'objects');
 $theme_url = $this->request->getThemeUrlPath();
 $page_title = MetaTagManager::getWindowTitle() ?: 'Kalkaska County Library Newspaper Archive';
@@ -32,6 +33,7 @@ $page_title = MetaTagManager::getWindowTitle() ?: 'Kalkaska County Library Newsp
 	<nav class="kcl-nav" aria-label="Primary navigation">
 		<div class="container kcl-shell">
 			<a href="<?= htmlspecialchars($home_url.'#decades', ENT_QUOTES, 'UTF-8'); ?>">Browse by decade</a>
+			<a href="<?= htmlspecialchars($browse_url, ENT_QUOTES, 'UTF-8'); ?>">Browse all</a>
 			<a href="<?= htmlspecialchars($home_url.'#about-archive', ENT_QUOTES, 'UTF-8'); ?>">About the archive</a>
 		</div>
 	</nav>
