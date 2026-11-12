@@ -35,13 +35,29 @@ See [DEPENDENCIES.md](../DEPENDENCIES.md).
 5. Configure isolated native Redis storage as described below. Keep browse/result
    reuse disabled while import changes membership and access.
 6. Provision the [exact-path static media guard](../support/MEDIA_ALLOWLIST.md)
-   and its scheduled refresh before exposing shared media. Preserve PDF range
+   and generate its publication map before exposing shared media. The completed
+   archive retains that map without scheduled regeneration. Preserve PDF range
    responses. Deny private application/configuration paths, alternate unguarded
    media aliases and the unguarded Tilepic PHP extractor.
 7. If the instance uses a reverse proxy and Anubis, configure them separately.
    Check forwarded public scheme/host, TLS, normal browser access and operator
    approved network bypasses. Keep challenge keys, policies and address inventories
    in private operational records.
+
+## Completed archive media map
+
+The once-per-minute map refresh was temporary import support. With the newspaper
+import complete, retain the final publication map and Apache guard and remove
+the import-only scheduled generator. Normal archive operation needs no scheduled
+media-map generator.
+
+Any future change to media, generated renditions, catalogue ownership/hierarchy
+or public access requires deliberate manual map regeneration using
+[the media-map procedure](../support/MEDIA_ALLOWLIST.md). Coordinate it with the
+authorized catalogue/media change and verify allowed and denied direct paths,
+including PDF range delivery. Catalogue access edits alone do not revoke grants
+already recorded in the static map. A routine theme update does not require
+regenerating an unchanged publication map.
 
 ## Redis and session isolation
 
@@ -145,8 +161,8 @@ storage until the migration is accepted.
 | Decade links empty or dates misordered | Shared text-date mapping, ISO values and native index; do not substitute a normalized date facet for text storage |
 | Browse slows down | Active local `TadlObjectBrowse` and its early scope filter; compare the same page/sort/size; confirm Redis independently rather than increasing TTLs |
 | Missing first-page preview or inline PDF on detail | Local `media_display.conf`, TileViewer fallback and ready `mediumlarge` derivative |
-| PDF controls appear but document does not render | Original PDF request/status, publication map refresh, native access, Anubis/proxy response and application PDF.js assets |
-| PDF range request denied | Exact native path/namespace and refreshed map; keep the guard intact while investigating |
+| PDF controls appear but document does not render | Original PDF request/status, retained publication map, native access, Anubis/proxy response and application PDF.js assets; manually regenerate the map only when an authorized media/access change requires it |
+| PDF range request denied | Exact native path/namespace and retained map; keep the guard intact while investigating |
 | Missing old TADL paths or duplicate declarations | Residual symlinks, wrong deployed tree and web-worker OPcache bindings after a structural migration |
 | Wrong styles, fonts or viewer controls | KCL asset URLs/content hashes, local font files, loader order and browser network errors |
 | Next/Previous differs from current results | Native session and result context, requested sort/page and catalogue changes during import |

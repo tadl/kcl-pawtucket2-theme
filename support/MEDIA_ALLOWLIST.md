@@ -1,8 +1,13 @@
 # Public static media map
 
+The completed newspaper archive uses a retained static publication map. Normal
+operation has **no scheduled map regeneration**. Keep the final map and Apache
+guard in place; neither depends on a recurring generator process.
+
 Run `generate_media_allowlist.php` against the KCL Pawtucket installation as its
-maintenance user. It issues read-only catalogue/media queries and writes only
-the private map, its lock and a temporary file in the map directory. It does
+maintenance user when deliberately updating that map. It issues read-only
+catalogue/media queries and writes only the private map, its lock and a temporary
+file in the map directory. It does
 not scan the shared media tree, change records, process media or clear caches.
 
 ```sh
@@ -15,9 +20,12 @@ php themes/kcl/support/generate_media_allowlist.php \
 Create the output directory outside the web root, writable by that user and
 traversable by Apache. The generator publishes mode0640 files owned by its
 runner and current group, so use Apache's readable group. A nonblocking lock
-prevents overlapping cron runs. Use `--quiet` for the once-per-minute scheduled
-refresh during import; successful quiet runs print nothing. The generator uses
-the helpers owned by this KCL checkout; no sibling theme is needed.
+prevents overlapping generator invocations. The once-per-minute refresh was an
+import-only measure while new records and renditions were being created. After
+the final map is generated and verified, remove that import schedule and retain
+the map. Do not schedule refreshes for the finished archive. The optional
+`--quiet` flag suppresses successful output. The generator uses the helpers
+owned by this KCL checkout; no sibling theme is needed.
 
 The root idno must be `kcl` and must resolve unambiguously. Public means access1
 on both the nondeleted object and representation, within that institution's
@@ -40,9 +48,14 @@ Do not let another Alias, alternate media namespace or rewrite bypass this
 check. Encoded or unusual path spellings are intentionally absent from the
 allowlist; use the exact native URLs. The generator uses same-directory atomic
 rename, so Apache sees a complete map. Generation errors attempt an atomic
-empty map and exit nonzero; monitor failures. Publication changes become
-effective with the next successful refresh, so the map has the scheduled
-refresh interval's revocation delay.
+empty map and exit nonzero; check the exit status and direct-media access
+results after a manual run.
+
+Future media replacements, new renditions, hierarchy/ownership changes or
+publication/access edits require deliberate manual regeneration and verification.
+Those edits do not update the retained map automatically: a previous direct-media
+grant remains effective until the map is regenerated. Include map regeneration
+and checks of both allowed and revoked paths in the same authorized change.
 
 Stock Tilepic uses a `.tpc` container plus the separate
 `viewers/apps/tilepic.php?p=...` extractor, rather than static tile subpaths.

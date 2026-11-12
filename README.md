@@ -58,9 +58,10 @@ licensed under SIL OFL 1.1. See `LICENSE` and `assets/pawtucket/css/Lato/OFL.txt
 
 The initial instance was provisioned November 9, 2026 at
 [history.kalkaskalibrary.org](https://history.kalkaskalibrary.org/), with a
-separate Pawtucket 2.0.10 installation. Archive coverage and indexed text grow
-while import proceeds. The planned 2.0.12 upgrade is separate work; review the
-native controller and viewer API adaptations during that upgrade.
+separate Pawtucket 2.0.10 installation. The newspaper import is complete, and the
+archive retains its final static media map without scheduled regeneration.
+The planned 2.0.12 upgrade is separate work; review the native controller and
+viewer API adaptations during that upgrade.
 
 - `tadl_catalogue_root_idno = kcl` bounds results, details and media to the actual
   KCL hierarchy. Missing or ambiguous roots deny material. Native publication,
@@ -74,7 +75,7 @@ native controller and viewer API adaptations during that upgrade.
 - Browse applies fresh hierarchy membership before native metadata sorting,
   retains native access/order/paging/context and checks scope again afterward.
 - Public search history uses sessions. Native browse TTL and theme result reuse
-  remain disabled during import. Comments, sharing, lightboxes, registration and
+  remain disabled. Comments, sharing, lightboxes, registration and
   record-summary PDF export are disabled.
 - Native cache uses Redis in its own database: Pawtucket 2.0.10 Redis keys do not
   include the application name. Keep sessions and cache storage isolated.
@@ -99,9 +100,9 @@ The optional enclosing workspace wrapper supports `./deploy kcl`, `./deploy tadl
 and `./deploy` for both independent themes. KCL selection calls this repository's
 own helper and works without a TADL checkout.
 
-After import, verify full coverage and finish legacy Omeka redirects from the
-completed crosswalk. Do not guess matches from duplicate identifiers. The theme
-displays existing OCR and uses native search; it does not process catalogue data.
+Use the completed crosswalk when finishing legacy Omeka redirects. Do not guess
+matches from duplicate identifiers. The theme displays existing OCR and uses
+native search; it does not process catalogue data.
 
 ## Checks and layout preview
 

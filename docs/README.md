@@ -10,7 +10,7 @@ commands. These guides cover maintaining KCL independently of other themes.
 | [Installation and operations](OPERATIONS.md) | Instance setup, Redis isolation, deployment, rollback, troubleshooting and upgrades |
 | [Application requirements](../DEPENDENCIES.md) | Stock Pawtucket prerequisites and the standalone boundary |
 | [Accessibility](../ACCESSIBILITY.md) | WCAG 2.2 AA interface review, evidence and content/testing limits |
-| [Static media guard](../support/MEDIA_ALLOWLIST.md) | Exact-path publication map, scheduled refresh and direct-media protection |
+| [Static media guard](../support/MEDIA_ALLOWLIST.md) | Retained exact-path publication map, deliberate manual updates and direct-media protection |
 | [Bundled runtime provenance](../BUNDLED_RUNTIME.md) | TADL source baseline, owned code and licenses |
 
 The supported baseline is Pawtucket 2.0.10 and PHP 8.3. The planned application
